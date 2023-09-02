@@ -9,8 +9,9 @@ import (
 )
 
 type Server struct {
-	http http.Server
-	mux  *http.ServeMux
+	http   http.Server
+	mux    *http.ServeMux
+	stopCh chan struct{}
 }
 
 const (
@@ -27,10 +28,11 @@ func NewServer(add string, port int) *Server {
 		Handler: http.TimeoutHandler(s.mux, httpAPITimeout, ""),
 	}
 
+	s.stopCh = make(chan struct{})
 	return s
 }
 
-func (s *Server) Run(stopCh <-chan struct{}, wg *sync.WaitGroup) {
+func (s *Server) Run(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	go func() {
@@ -40,7 +42,7 @@ func (s *Server) Run(stopCh <-chan struct{}, wg *sync.WaitGroup) {
 	}()
 	fmt.Printf("Listen on %s \n", s.http.Addr)
 
-	<-stopCh
+	<-s.stopCh
 
 	ctx, cancel := context.WithTimeout(context.Background(), shutdwnTimeout)
 	defer cancel()
@@ -64,4 +66,8 @@ func (s *Server) Run(stopCh <-chan struct{}, wg *sync.WaitGroup) {
 
 func (s *Server) HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {
 	s.mux.HandleFunc(pattern, handler)
+}
+
+func (s *Server) Stop() {
+	s.stopCh <- struct{}{}
 }
