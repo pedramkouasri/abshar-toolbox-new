@@ -13,7 +13,7 @@ type Service struct {
 }
 
 type process struct {
-	items       []Service
+	items       map[string]int
 	chanProcess chan<- Service
 	cnt         int
 	percent     int
@@ -26,6 +26,7 @@ func NewLoading(packages []string, wg *sync.WaitGroup) *process {
 	process.wg = wg
 	process.chanProcess = listeners(process)
 	process.percent = 0
+	process.items = map[string]int{}
 
 	return process
 }
@@ -35,7 +36,7 @@ func listeners(process *process) chan<- Service {
 
 	go func() {
 		for service := range ch {
-			process.items = append(process.items, service)
+			process.items[service.name] = service.percent
 			process.print()
 			process.wg.Done()
 		}
@@ -60,15 +61,15 @@ func (p *process) print() {
 	cmdy.Stdout = os.Stdout
 	cmdy.Run()
 
-	for _, service := range p.items {
-		fmt.Print(service.name, ":[")
-		for j := 0; j <= service.percent; j++ {
+	for serviceName, percent := range p.items {
+		fmt.Print(serviceName, ":[")
+		for j := 0; j <= percent; j++ {
 			fmt.Print("=")
 		}
-		for j := service.percent + 1; j <= 100; j++ {
+		for j := percent + 1; j <= 100; j++ {
 			fmt.Print(" ")
 		}
-		fmt.Print("] %", service.percent)
+		fmt.Print("] %", percent)
 		fmt.Println()
 	}
 
@@ -77,9 +78,9 @@ func (p *process) print() {
 func (p *process) updatePercent() {
 	sum := 0
 	cnt := 0
-	for _, service := range p.items {
+	for _, percent := range p.items {
 		cnt++
-		sum += service.percent
+		sum += percent
 	}
 
 	if cnt == 0 {

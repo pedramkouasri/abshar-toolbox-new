@@ -1,1 +1,6 @@
 .vscode
+go.sum
+temp
+builds
+my.db
+app.log

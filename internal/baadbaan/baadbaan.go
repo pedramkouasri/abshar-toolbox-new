@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
+	"github.com/pedramkousari/abshar-toolbox-new/contracts"
+	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
 	"github.com/pedramkousari/abshar-toolbox-new/utils"
 )
 
@@ -27,8 +29,10 @@ func NewBaadbaan(cnf config.Config, version string) *baadbaan {
 	}
 }
 
-func (b *baadbaan) Update() error {
-	fmt.Printf("baadbaan %v", b)
+func (b *baadbaan) Update(loading contracts.Loader) error {
+
+	logger.Info("Changed Permission")
+	loading.Update(b.serviceName, 10)
 	return nil
 
 	if err := utils.ChangePermision("www-data", b.dir); err != nil {
