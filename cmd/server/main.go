@@ -7,9 +7,6 @@ import (
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 )
 
-var stop chan struct{} = make(chan struct{})
-var rollback chan struct{} = make(chan struct{})
-
 func main() {
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
@@ -17,7 +14,7 @@ func main() {
 	cnf := config.GetCnf()
 	server := api.NewServer(cnf.Server.Host, cnf.Server.Port)
 
-	api.HandleFunc(server)
+	api.HandleFunc(cnf, server)
 	go server.Run(wg)
 
 	wg.Wait()

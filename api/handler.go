@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/update"
 )
 
-func HandleFunc(server *Server) {
+func HandleFunc(cnf config.Config, server *Server) {
+
 	server.HandleFunc("/ping", pingHandle)
-	server.HandleFunc("/patch", patchHandle)
+	server.HandleFunc("/patch", patchHandle(cnf))
 	server.HandleFunc("/state", stateHandle)
 
 	server.HandleFunc("/stop", stopHandle(server))
@@ -20,26 +22,28 @@ func pingHandle(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
 }
 
-func patchHandle(w http.ResponseWriter, r *http.Request) {
-	us := update.NewUpdateService()
+func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-	defer cancel()
+	return func(w http.ResponseWriter, r *http.Request) {
+		us := update.NewUpdateService(cnf)
 
-	go func() {
-		<-time.After(time.Second * 10)
-		cancel()
-	}()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		defer cancel()
 
-	resChan := make(chan bool)
-	go us.Handle(ctx, resChan)
+		// go func() {
+		// 	<-time.After(time.Second * 10)
+		// 	cancel()
+		// }()
 
-	if res := <-resChan; res {
-		w.Write([]byte("OK"))
-	} else {
-		w.Write([]byte("NO"))
+		resChan := make(chan bool)
+		go us.Handle(ctx, resChan)
+
+		if res := <-resChan; res {
+			w.Write([]byte("OK"))
+		} else {
+			w.Write([]byte("NO"))
+		}
 	}
-
 }
 func stateHandle(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))

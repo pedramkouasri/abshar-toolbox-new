@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -15,6 +16,7 @@ type Server struct {
 type Config struct {
 	Server           Server `mapstructure:"server"`
 	DockerComposeDir string `mapstructure:"docker-compose-directory"`
+	startedAt        time.Time
 }
 
 var config Config
@@ -42,6 +44,14 @@ func init() {
 	}
 
 	config = *cnf
+}
+
+func (cnf *Config) SetStartTime() {
+	cnf.startedAt = time.Now()
+}
+
+func (cnf *Config) GetStartTime() int64 {
+	return cnf.startedAt.Unix()
 }
 
 func GetCnf() Config {
