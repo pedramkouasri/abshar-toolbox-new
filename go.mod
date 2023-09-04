@@ -2,7 +2,10 @@ module github.com/pedramkousari/abshar-toolbox-new
 
 go 1.20
 
-require github.com/spf13/viper v1.16.0
+require (
+	github.com/spf13/viper v1.16.0
+	go.etcd.io/bbolt v1.3.7
+)
 
 require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect

@@ -1,6 +1,7 @@
 package baadbaan
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"time"
@@ -17,23 +18,51 @@ type baadbaan struct {
 	serviceName   string
 	containerName string
 	env           *utils.ConfigService
+	percent       int
+	loading       contracts.Loader
 }
 
-func NewBaadbaan(cnf config.Config, version string) *baadbaan {
+func NewBaadbaan(cnf config.Config, version string, loading contracts.Loader) *baadbaan {
 	return &baadbaan{
 		dir:           path.Join(cnf.DockerComposeDir, "baadbaan_new"),
 		branch:        fmt.Sprintf("patch-before-update-%s-%d", version, cnf.GetStartTime()),
 		serviceName:   "baadbaan",
 		containerName: "baadbaan_new",
 		env:           utils.LoadEnv(path.Join(cnf.DockerComposeDir, "baadbaan_new")),
+		percent:       0,
+		loading:       loading,
 	}
 }
 
-func (b *baadbaan) Update(loading contracts.Loader) error {
+func (b *baadbaan) Update(ctx context.Context, res chan<- bool, status bool) error {
 
-	logger.Info("Changed Permission")
-	loading.Update(b.serviceName, 10)
-	return nil
+	completeSignal := make(chan bool)
+	go func(xres bool) {
+		if xres {
+			time.Sleep(5 * time.Second)
+			fmt.Print("AAAA")
+		}
+
+		logger.Info("Changed Permission")
+		// b.setPercent(10)
+
+		if xres {
+			completeSignal <- true
+		} else {
+			completeSignal <- false
+		}
+	}(status)
+
+	select {
+	case res := <-completeSignal:
+		if res {
+			return nil
+		}
+
+		return fmt.Errorf("SSS")
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 
 	if err := utils.ChangePermision("www-data", b.dir); err != nil {
 		return fmt.Errorf("Change Permission has Error : %s", err)
@@ -131,4 +160,9 @@ func (b *baadbaan) Rollback() {
 	fmt.Println("Start Roolbacking")
 	time.Sleep(time.Second * 30)
 	fmt.Println("End Roolbacking")
+}
+
+func (b *baadbaan) setPercent(percent int) {
+	b.percent = percent
+	b.loading.Update(b.serviceName, b.percent)
 }

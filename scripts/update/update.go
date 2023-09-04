@@ -8,11 +8,11 @@ import (
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/baadbaan"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/loading"
+	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
 )
 
 type updateService struct {
 	cnf config.Config
-	src string
 }
 
 func NewUpdateService(cnf config.Config) updateService {
@@ -22,26 +22,75 @@ func NewUpdateService(cnf config.Config) updateService {
 }
 
 func (us updateService) Handle(ctx context.Context, resChan chan bool) {
-	wg := new(sync.WaitGroup)
-	loading := loading.NewLoading([]string{"baadbaan", "XXX"}, wg)
-	defer wg.Wait()
+	wgL := new(sync.WaitGroup)
+	loading := loading.NewLoading([]string{"baadbaan", "XXX"}, wgL)
+	defer wgL.Wait()
 
 	us.cnf.SetStartTime()
-	bs := baadbaan.NewBaadbaan(us.cnf, "15-10")
+	bs := baadbaan.NewBaadbaan(us.cnf, "15-10", loading)
 
-	chanComplete := make(chan struct{})
+	perServiceChan := make(chan bool)
+	wg := new(sync.WaitGroup)
+
+	wg.Add(1)
 	go func() {
-		bs.Update(loading)
-		chanComplete <- struct{}{}
+		bs.Update(ctx, perServiceChan, false)
+		wg.Done()
 	}()
 
-	select {
-	case <-chanComplete:
-		resChan <- true
-		fmt.Println("completed")
+	wg.Add(1)
+	go func() {
+		bs.Update(ctx, perServiceChan, true)
+		wg.Done()
+	}()
 
-	case <-ctx.Done():
-		resChan <- false
+	wg.Add(1)
+	go func() {
+		bs.Update(ctx, perServiceChan, true)
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		bs.Update(ctx, perServiceChan, true)
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		bs.Update(ctx, perServiceChan, true)
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		bs.Update(ctx, perServiceChan, true)
+		wg.Done()
+	}()
+
+	go func() {
+		wg.Wait()
+		close(perServiceChan)
+	}()
+
+	for {
+		select {
+		case res, ok := <-perServiceChan:
+			fmt.Println(res)
+
+			if !ok {
+				logger.Info("Complete update all service")
+				resChan <- true
+				return
+			} else if res == false {
+				resChan <- false
+				return
+			}
+
+		case <-ctx.Done():
+			resChan <- false
+			return
+		}
 	}
 
 }

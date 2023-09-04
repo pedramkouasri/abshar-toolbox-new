@@ -13,10 +13,17 @@ type Server struct {
 	Port int    `mapstructure:"port"`
 }
 
+const (
+	updateTimeOut   = time.Minute * 15
+	rollbackTimeOut = time.Minute * 5
+)
+
 type Config struct {
 	Server           Server `mapstructure:"server"`
 	DockerComposeDir string `mapstructure:"docker-compose-directory"`
 	startedAt        time.Time
+	UpdateTimeOut    time.Duration
+	RollbackTimeOut  time.Duration
 }
 
 var config Config
@@ -44,6 +51,8 @@ func init() {
 	}
 
 	config = *cnf
+	config.UpdateTimeOut = updateTimeOut
+	config.RollbackTimeOut = rollbackTimeOut
 }
 
 func (cnf *Config) SetStartTime() {

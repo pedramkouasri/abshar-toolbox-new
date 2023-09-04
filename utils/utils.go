@@ -65,3 +65,11 @@ func ChangePermision(username string, dir string) error {
 func getCommand(cmd string, containerName string) []string {
 	return strings.Fields(fmt.Sprintf("docker exec %s %s", containerName, cmd))
 }
+
+func FileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
