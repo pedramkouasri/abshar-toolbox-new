@@ -34,33 +34,36 @@ func NewBaadbaan(cnf config.Config, version string, loading contracts.Loader) *b
 	}
 }
 
-func (b *baadbaan) Update(ctx context.Context, res chan<- bool, status bool) error {
+func (b *baadbaan) Update(ctx context.Context) error {
 
 	completeSignal := make(chan bool)
-	go func(xres bool) {
-		if xres {
-			time.Sleep(5 * time.Second)
-			fmt.Print("AAAA")
-		}
+	go func() {
+		defer close(completeSignal)
 
-		logger.Info("Changed Permission")
-		// b.setPercent(10)
-
-		if xres {
-			completeSignal <- true
-		} else {
+		if err := ctx.Err(); err != nil {
 			completeSignal <- false
+			return
 		}
-	}(status)
+
+		b.setPercent(10)
+
+	}()
 
 	select {
-	case res := <-completeSignal:
+	case res, ok := <-completeSignal:
+		if !ok {
+			logger.Info(fmt.Sprintf("%s Completed", b.serviceName))
+			return nil
+		}
+
 		if res {
 			return nil
 		}
 
-		return fmt.Errorf("SSS")
+		return fmt.Errorf("Service %s is failed", b.serviceName)
+
 	case <-ctx.Done():
+		logger.Info(fmt.Sprintf("%s Canceled", b.serviceName))
 		return ctx.Err()
 	}
 

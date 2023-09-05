@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/db"
@@ -79,18 +78,13 @@ func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request)
 			defer wg.Done()
 			logger.Info("Run Go Routine Update")
 
-			ctxUpdate, cancelUpdate := context.WithTimeout(context.Background(), time.Second*3)
-			defer cancelUpdate()
-
 			up := update.NewUpdateService(cnf)
-			go up.Handle(ctxUpdate, updateResultChan)
 
-			if res := <-updateResultChan; res {
+			if err := up.Handle(); err == nil {
 				logger.Info("Completed Update")
 				db.StoreSuccess()
 				return
 			}
-			cancelUpdate()
 
 			logger.Error(fmt.Errorf("Update Failed"))
 

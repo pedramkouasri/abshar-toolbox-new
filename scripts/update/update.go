@@ -8,7 +8,6 @@ import (
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/baadbaan"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/loading"
-	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
 )
 
 type updateService struct {
@@ -21,7 +20,7 @@ func NewUpdateService(cnf config.Config) updateService {
 	}
 }
 
-func (us updateService) Handle(ctx context.Context, resChan chan bool) {
+func (us updateService) Handle() error {
 	wgL := new(sync.WaitGroup)
 	loading := loading.NewLoading([]string{"baadbaan", "XXX"}, wgL)
 	defer wgL.Wait()
@@ -29,67 +28,87 @@ func (us updateService) Handle(ctx context.Context, resChan chan bool) {
 	us.cnf.SetStartTime()
 	bs := baadbaan.NewBaadbaan(us.cnf, "15-10", loading)
 
-	perServiceChan := make(chan bool)
+	hasError := make(chan bool)
 	wg := new(sync.WaitGroup)
 
+	ctx, cancel := context.WithTimeout(context.Background(), us.cnf.UpdateTimeOut)
+	defer cancel()
+
 	wg.Add(1)
 	go func() {
-		bs.Update(ctx, perServiceChan, false)
-		wg.Done()
+		defer wg.Done()
+		if err := bs.Update(ctx); err != nil {
+			hasError <- true
+		}
 	}()
 
 	wg.Add(1)
 	go func() {
-		bs.Update(ctx, perServiceChan, true)
-		wg.Done()
+		defer wg.Done()
+		if err := bs.Update(ctx); err != nil {
+			hasError <- true
+		}
 	}()
 
 	wg.Add(1)
 	go func() {
-		bs.Update(ctx, perServiceChan, true)
-		wg.Done()
+		defer wg.Done()
+		if err := bs.Update(ctx); err != nil {
+			hasError <- true
+		}
 	}()
 
 	wg.Add(1)
 	go func() {
-		bs.Update(ctx, perServiceChan, true)
-		wg.Done()
+		defer wg.Done()
+		if err := bs.Update(ctx); err != nil {
+			hasError <- true
+		}
+
 	}()
 
 	wg.Add(1)
 	go func() {
-		bs.Update(ctx, perServiceChan, true)
-		wg.Done()
+		defer wg.Done()
+		if err := bs.Update(ctx); err != nil {
+			hasError <- true
+		}
 	}()
 
 	wg.Add(1)
 	go func() {
-		bs.Update(ctx, perServiceChan, true)
-		wg.Done()
+		defer wg.Done()
+		if err := bs.Update(ctx); err != nil {
+			hasError <- true
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := bs.Update(ctx); err != nil {
+			hasError <- true
+		}
 	}()
 
 	go func() {
 		wg.Wait()
-		close(perServiceChan)
+		close(hasError)
 	}()
 
 	for {
 		select {
-		case res, ok := <-perServiceChan:
-			fmt.Println(res)
-
+		case res, ok := <-hasError:
 			if !ok {
-				logger.Info("Complete update all service")
-				resChan <- true
-				return
-			} else if res == false {
-				resChan <- false
-				return
+				return nil
+			}
+
+			if res {
+				return fmt.Errorf("Recived Error")
 			}
 
 		case <-ctx.Done():
-			resChan <- false
-			return
+			return fmt.Errorf("Time Out Update With Error %v", ctx.Err().Error())
 		}
 	}
 
