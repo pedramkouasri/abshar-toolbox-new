@@ -42,55 +42,6 @@ func (us updateService) Handle() error {
 		}
 	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := bs.Update(ctx); err != nil {
-			hasError <- true
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := bs.Update(ctx); err != nil {
-			hasError <- true
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := bs.Update(ctx); err != nil {
-			hasError <- true
-		}
-
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := bs.Update(ctx); err != nil {
-			hasError <- true
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := bs.Update(ctx); err != nil {
-			hasError <- true
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := bs.Update(ctx); err != nil {
-			hasError <- true
-		}
-	}()
-
 	go func() {
 		wg.Wait()
 		close(hasError)

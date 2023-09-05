@@ -34,15 +34,110 @@ func NewBaadbaan(cnf config.Config, version string, loading contracts.Loader) *b
 	}
 }
 
+func (b *baadbaan) exec(ctx context.Context, percent int, message string, fn func() error) (err error) {
+	if err = ctx.Err(); err != nil {
+		return
+	}
+
+	// if err = fn(); err != nil {
+	// 	return
+	// }
+
+	b.loading.Update(b.serviceName, percent)
+	logger.Info(message)
+	return
+}
+
+func (b *baadbaan) Run(ctx context.Context) error {
+	var err error
+
+	err = b.exec(ctx, 10, "Baadbaan Changed Permission", func() error {
+		return utils.ChangePermision("www-data", b.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Change Permission has Error : %s", err)
+	}
+
+	err = b.exec(ctx, 30, "Baadbaan Backup File Complete With git", func() error {
+		return utils.BackupFileWithGit(b.dir, b.branch)
+	})
+	if err != nil {
+		return fmt.Errorf("Backup File With GIt Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 40, "Baadbaan Backup Database Complete", func() error {
+		return utils.BackupDatabase(b.serviceName, b.env)
+	})
+	if err != nil {
+		return fmt.Errorf("Backup Database Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 45, "Baadbaan Config Clear Complete", func() error {
+		return utils.ConfigClear(b.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Config Clear Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 50, "Baadbaan Extracted Tar File", func() error {
+		return utils.ExtractTarFile(b.serviceName, b.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Extract Tar File Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 65, "Baadbaan Composer Dump Autoload complete", func() error {
+		return utils.ComposerDumpAutoload(b.containerName)
+	})
+	if err != nil {
+		return fmt.Errorf("Composer Dump Autoload Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 90, "Baadbaan Migrated Database", func() error {
+		return utils.MigrateDB(b.containerName)
+	})
+	if err != nil {
+		return fmt.Errorf("Migrate Database Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 95, "Baadbaan View Cleared", func() error {
+		return utils.ViewClear(b.containerName)
+	})
+	if err != nil {
+		return fmt.Errorf("View Clear Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 97, "Baadbaan Config Cleared Completed", func() error {
+		return utils.ConfigClear(b.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Config Clear Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 98, "Baadbaan Config Cache Completed", func() error {
+		return utils.ConfigCache(b.containerName)
+	})
+	if err != nil {
+		return fmt.Errorf("Config Cache Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 100, "Baadbaan Changed Permission", func() error {
+		return utils.ChangePermision("www-data", b.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Change Permission has Error : %s", err)
+	}
+
+	return nil
+}
+
 func (b *baadbaan) Update(ctx context.Context) error {
 
 	completeSignal := make(chan bool)
 	go func() {
 		defer close(completeSignal)
-
-		if err := ctx.Err(); err != nil {
+		if err := b.Run(ctx); err != nil {
 			completeSignal <- false
-			return
 		}
 
 		b.setPercent(10)
@@ -52,7 +147,7 @@ func (b *baadbaan) Update(ctx context.Context) error {
 	select {
 	case res, ok := <-completeSignal:
 		if !ok {
-			logger.Info(fmt.Sprintf("%s Completed", b.serviceName))
+			logger.Info(fmt.Sprintf("Service Update %s Completed", b.serviceName))
 			return nil
 		}
 
@@ -60,103 +155,12 @@ func (b *baadbaan) Update(ctx context.Context) error {
 			return nil
 		}
 
-		return fmt.Errorf("Service %s is failed", b.serviceName)
+		return fmt.Errorf("Service Update %s is failed", b.serviceName)
 
 	case <-ctx.Done():
 		logger.Info(fmt.Sprintf("%s Canceled", b.serviceName))
 		return ctx.Err()
 	}
-
-	if err := utils.ChangePermision("www-data", b.dir); err != nil {
-		return fmt.Errorf("Change Permission has Error : %s", err)
-	}
-
-	// progress(types.Process{
-	// 	State:   10,
-	// 	Message: "Changed Permission",
-	// })
-
-	if err := utils.BackupFileWithGit(b.dir, b.branch); err != nil {
-		return fmt.Errorf("Backup File With GIt Failed Error Is: %s", err)
-	}
-	// progress(types.Process{
-	// 	State:   30,
-	// 	Message: "Backup File Complete With git",
-	// })
-
-	if err := utils.BackupDatabase(b.serviceName, b.env); err != nil {
-		return fmt.Errorf("Backup Database Failed Error Is: %s", err)
-	}
-	// progress(types.Process{
-	// 	State:   40,
-	// 	Message: "Backup Database Complete",
-	// })
-
-	if err := utils.ConfigClear(b.dir); err != nil {
-		return fmt.Errorf("Config Clear Failed Error Is: %s", err)
-	}
-
-	if err := utils.ExtractTarFile(b.serviceName, b.dir); err != nil {
-		return fmt.Errorf("Extract Tar File Failed Error Is: %s", err)
-	}
-	// progress(types.Process{
-	// 	State:   50,
-	// 	Message: "Extracted Tar File",
-	// })
-
-	if err := utils.ComposerDumpAutoload(b.containerName); err != nil {
-		return fmt.Errorf("Composer Dump Autoload Failed Error Is: %s", err)
-	}
-	// progress(types.Process{
-	// 	State:   65,
-	// 	Message: "Composer Dump Autoload complete",
-	// })
-
-	if err := utils.MigrateDB(b.containerName); err != nil {
-		return fmt.Errorf("Migrate Database Failed Error Is: %s", err)
-	}
-
-	// progress(types.Process{
-	// 	State:   90,
-	// 	Message: "Migrated Database",
-	// })
-
-	if err := utils.ViewClear(b.containerName); err != nil {
-		return fmt.Errorf("View Clear Failed Error Is: %s", err)
-	}
-
-	// progress(types.Process{
-	// 	State:   95,
-	// 	Message: "View Cleared",
-	// })
-
-	if err := utils.ConfigClear(b.dir); err != nil {
-		return fmt.Errorf("Config Clear Failed Error Is: %s", err)
-	}
-
-	// progress(types.Process{
-	// 	State:   97,
-	// 	Message: "Config Cache Completed",
-	// })
-
-	if err := utils.ConfigCache(b.containerName); err != nil {
-		return fmt.Errorf("Config Cache Failed Error Is: %s", err)
-	}
-
-	// progress(types.Process{
-	// 	State:   98,
-	// 	Message: "Config Cache Completed",
-	// })
-
-	if err := utils.ChangePermision("www-data", b.dir); err != nil {
-		return fmt.Errorf("Change Permission has Error : %s", err)
-	}
-	// progress(types.Process{
-	// 	State:   100,
-	// 	Message: "Changed Permission",
-	// })
-
-	return nil
 }
 
 func (b *baadbaan) Rollback() {
