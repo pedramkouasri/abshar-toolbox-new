@@ -80,6 +80,10 @@ func (p *process) print() {
 
 }
 
+func (p *process) GetPercent() int {
+	return p.percent
+}
+
 func (p *process) updatePercent() {
 	sum := 0
 	cnt := 0
