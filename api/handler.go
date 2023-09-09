@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -58,6 +57,8 @@ func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request)
 
 		fileSrc := cnf.DockerComposeDir + "/baadbaan_new/storage/app/patches/" + version
 		_ = fileSrc
+
+		//TODO::remove comment
 		// if !utils.FileExists(fileSrc) {
 		// 	w.WriteHeader(http.StatusBadRequest)
 		// 	w.Write([]byte(`{
@@ -80,28 +81,22 @@ func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request)
 
 			up := update.NewUpdateService(cnf)
 
-			if err := up.Handle(); err == nil {
+			err := up.Handle()
+			if err == nil {
 				logger.Info("Completed Update")
 				db.StoreSuccess()
 				return
 			}
 
-			logger.Error(fmt.Errorf("Update Failed"))
-
-			ctxRollback, cancelRollback := context.WithTimeout(context.Background(), cnf.RollbackTimeOut)
-			defer cancelRollback()
-
-			rollbackResultChan := make(chan bool)
-			defer close(rollbackResultChan)
+			logger.Error(fmt.Errorf("Update Failed %v", err))
 
 			rol := rollback.NewRollbackService(cnf)
-			go rol.Handle(ctxRollback, rollbackResultChan)
-
-			if res := <-rollbackResultChan; res {
-				logger.Info("Rollback Success")
+			err = rol.Handle()
+			if err == nil {
+				logger.Info("Completed Rollback")
 				return
 			}
-			logger.Error(fmt.Errorf("Rollback Failed"))
+			logger.Error(fmt.Errorf("Rollback Failed %v", err))
 		}()
 
 		wg.Wait()

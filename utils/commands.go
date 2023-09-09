@@ -9,5 +9,6 @@ const (
 	configCacheCommand     = "php artisan config:cache"
 	removeConfig           = "rm -f `find bootstrap/cache/ ! -name '.gitignore' -type f`"
 	sqlDumpCommand         = "mariadb-dump --user=%s --password=%s --host=%s --port=%s  %s"
+	sqlRestoreDB           = "mysql -u %s --password=%s  --host=%s --port=%s %s"
 	gitSafeDirectory       = "git config --global --add safe.directory *"
 )

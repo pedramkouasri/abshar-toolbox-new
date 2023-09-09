@@ -2,10 +2,13 @@ package rollback
 
 import (
 	"context"
-	"time"
+	"fmt"
+	"strconv"
+	"sync"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
-	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
+	"github.com/pedramkousari/abshar-toolbox-new/internal/baadbaan"
+	"github.com/pedramkousari/abshar-toolbox-new/pkg/db"
 )
 
 type rollbackService struct {
@@ -18,18 +21,44 @@ func NewRollbackService(cnf config.Config) rollbackService {
 	}
 }
 
-func (us rollbackService) Handle(ctx context.Context, resChan chan bool) (err error) {
-	defer func() {
-		if err != nil {
-			resChan <- false
-		} else {
-			resChan <- true
+func (rb rollbackService) Handle() error {
+	wg := new(sync.WaitGroup)
+
+	hasError := make(chan bool)
+
+	ctx, cancel := context.WithTimeout(context.Background(), rb.cnf.RollbackTimeOut)
+	defer cancel()
+
+	p, _ := strconv.Atoi(string(db.NewBoltDB().Get("baadbaan")))
+	bs := baadbaan.NewBaadbaanRollback(rb.cnf, "15-10", p)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := bs.Rollback(ctx); err != nil {
+			hasError <- true
 		}
 	}()
 
-	logger.Info("Rollback Started")
-	<-time.After(time.Second * 5)
-	logger.Info("Rollback Finished")
+	go func() {
+		wg.Wait()
+		close(hasError)
+	}()
 
-	return
+	for {
+		select {
+		case res, ok := <-hasError:
+			if !ok {
+				return nil
+			}
+
+			if res {
+				return fmt.Errorf("Recived Error In Rollback")
+			}
+
+		case <-ctx.Done():
+			return fmt.Errorf("Time Out Restore With Error %v", ctx.Err().Error())
+		}
+	}
+
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path"
-	"time"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/contracts"
@@ -34,16 +33,28 @@ func NewBaadbaan(cnf config.Config, version string, loading contracts.Loader) *b
 	}
 }
 
+func NewBaadbaanRollback(cnf config.Config, version string, percent int) *baadbaan {
+	return &baadbaan{
+		dir:           path.Join(cnf.DockerComposeDir, "baadbaan_new"),
+		branch:        fmt.Sprintf("patch-before-update-%s-%d", version, cnf.GetStartTime()),
+		serviceName:   "baadbaan",
+		containerName: "baadbaan_new",
+		env:           utils.LoadEnv(path.Join(cnf.DockerComposeDir, "baadbaan_new")),
+		percent:       percent,
+	}
+}
+
 func (b *baadbaan) exec(ctx context.Context, percent int, message string, fn func() error) (err error) {
 	if err = ctx.Err(); err != nil {
 		return
 	}
 
+	//TODO::remove
 	// if err = fn(); err != nil {
 	// 	return
 	// }
 
-	b.loading.Update(b.serviceName, percent)
+	b.setPercent(percent)
 	logger.Info(message)
 	return
 }
@@ -66,7 +77,7 @@ func (b *baadbaan) Run(ctx context.Context) error {
 	}
 
 	err = b.exec(ctx, 40, "Baadbaan Backup Database Complete", func() error {
-		return utils.BackupDatabase(b.serviceName, b.env)
+		return utils.BackupDatabase(b.branch, b.env)
 	})
 	if err != nil {
 		return fmt.Errorf("Backup Database Failed Error Is: %s", err)
@@ -139,9 +150,6 @@ func (b *baadbaan) Update(ctx context.Context) error {
 		if err := b.Run(ctx); err != nil {
 			completeSignal <- false
 		}
-
-		b.setPercent(10)
-
 	}()
 
 	select {
@@ -163,10 +171,54 @@ func (b *baadbaan) Update(ctx context.Context) error {
 	}
 }
 
-func (b *baadbaan) Rollback() {
-	fmt.Println("Start Roolbacking")
-	time.Sleep(time.Second * 30)
-	fmt.Println("End Roolbacking")
+func (b *baadbaan) Rollback(ctx context.Context) error {
+
+	completeSignal := make(chan bool)
+	go func() {
+		defer close(completeSignal)
+		if err := b.RunRollback(ctx); err != nil {
+			completeSignal <- false
+		}
+	}()
+
+	select {
+	case res, ok := <-completeSignal:
+		if !ok {
+			logger.Info(fmt.Sprintf("Service Rollback %s Completed", b.serviceName))
+			return nil
+		}
+
+		if res {
+			return nil
+		}
+
+		return fmt.Errorf("Service Rollback %s is failed", b.serviceName)
+
+	case <-ctx.Done():
+		logger.Info(fmt.Sprintf("%s Rollback Canceled", b.serviceName))
+		return ctx.Err()
+	}
+}
+
+func (b *baadbaan) RunRollback(ctx context.Context) error {
+	logger.Info(fmt.Sprintf("%d", b.percent))
+	if b.percent < 50 {
+		return nil
+	}
+
+	// if err := utils.RestoreDatabase(b.branch, b.env); err != nil {
+	// 	return fmt.Errorf("Baadbaan Restore DB Failed %v ", err)
+	// }
+
+	logger.Info("Baadbaan Restore DB")
+
+	// if err := utils.RestoreCode(b.dir); err != nil {
+	// 	return fmt.Errorf("Baadbaan Restore Code Failed %v ", err)
+	// }
+
+	logger.Info("Baadbaan Restore Code")
+
+	return nil
 }
 
 func (b *baadbaan) setPercent(percent int) {

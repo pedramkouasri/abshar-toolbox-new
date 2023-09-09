@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+
+	"github.com/pedramkousari/abshar-toolbox-new/pkg/db"
 )
 
 type Service struct {
@@ -38,6 +40,11 @@ func listeners(process *process) chan<- Service {
 		for service := range ch {
 			process.items[service.name] = service.percent
 			process.print()
+			process.updatePercent()
+
+			db.NewBoltDB().Set(service.name, []byte(fmt.Sprintf("%d", service.percent)))
+			db.StorePercent(fmt.Sprint(process.percent))
+
 			process.wg.Done()
 		}
 	}()
@@ -48,12 +55,10 @@ func listeners(process *process) chan<- Service {
 func (p *process) Update(service_name string, percent int) {
 	p.wg.Add(1)
 
-	go func() {
-		p.chanProcess <- Service{
-			name:    service_name,
-			percent: percent,
-		}
-	}()
+	p.chanProcess <- Service{
+		name:    service_name,
+		percent: percent,
+	}
 }
 
 func (p *process) print() {

@@ -21,15 +21,14 @@ func NewUpdateService(cnf config.Config) updateService {
 }
 
 func (us updateService) Handle() error {
-	wgL := new(sync.WaitGroup)
-	loading := loading.NewLoading([]string{"baadbaan", "XXX"}, wgL)
-	defer wgL.Wait()
+	wg := new(sync.WaitGroup)
+
+	loading := loading.NewLoading([]string{"baadbaan"}, wg)
 
 	us.cnf.SetStartTime()
 	bs := baadbaan.NewBaadbaan(us.cnf, "15-10", loading)
 
 	hasError := make(chan bool)
-	wg := new(sync.WaitGroup)
 
 	ctx, cancel := context.WithTimeout(context.Background(), us.cnf.UpdateTimeOut)
 	defer cancel()

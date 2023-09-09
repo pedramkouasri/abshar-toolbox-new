@@ -95,3 +95,19 @@ func gitCommit(dir string, branch string) error {
 
 	return nil
 }
+
+func RestoreCode(dir string) error {
+	cmd := exec.Command("git", "reset", "--hard")
+	cmd.Dir = dir
+	if _, err := cmd.Output(); err != nil {
+		return err
+	}
+
+	cmd = exec.Command("git", "clean", "-fd")
+	cmd.Dir = dir
+	if _, err := cmd.Output(); err != nil {
+		return err
+	}
+
+	return nil
+}
