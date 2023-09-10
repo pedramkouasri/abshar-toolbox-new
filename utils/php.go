@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -87,6 +89,64 @@ func ConfigClear(dir string) error {
 
 	if err != nil {
 		return fmt.Errorf("walk to filepath error in err  %s\n", err)
+	}
+	return nil
+}
+
+func ComposerChangedOrPanic(serviceName string) bool {
+	diffFile, err := os.Open(fmt.Sprintf("/temp/%s/diff.txt", serviceName))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer diffFile.Close()
+
+	scanner := bufio.NewScanner(diffFile)
+
+	var exists bool = false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "composer.lock" {
+			exists = true
+			break
+		}
+	}
+
+	// Check for any errors during scanning
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+
+	return exists
+}
+
+func ComposerInstall(containerName string) error {
+	command := getCommand(composerInstallCommand, containerName)
+	cmd := exec.Command(command[0], command[1:]...)
+
+	if err := cmd.Run(); err != nil {
+		panic(err)
+	}
+	return nil
+}
+
+func GenerateDiffJson(dir string, serviceName string, tag1, tag2 string) error {
+
+	file, err := os.Create(fmt.Sprintf("/temp/%s/composer-lock-diff.json", serviceName))
+	if err != nil {
+		panic(err)
+	}
+
+	cmd := exec.Command("composer-lock-diff", "--from", tag1, "--to", tag2, "--json", "--pretty", "--only-prod")
+	cmd.Stdout = file
+	// cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = dir
+
+	err = cmd.Run()
+	if err != nil {
+		return err
 	}
 	return nil
 }

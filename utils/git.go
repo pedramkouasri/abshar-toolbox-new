@@ -111,3 +111,69 @@ func RestoreCode(dir string) error {
 
 	return nil
 }
+
+func RemoveTag(dir string, branch string) {
+	cmd := exec.Command("git", "tag", "-d", branch)
+	cmd.Dir = dir
+	cmd.Output()
+}
+
+func Fetch(dir string) error {
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("git --git-dir %s/.git  fetch", dir))
+
+	_, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetDiff(dir string, tag1 string, tag2 string, excludePath []string, appendPatch []string) error {
+	cmd := exec.Command("git", "diff", "--name-only", "--diff-filter", "ACMR", tag1, tag2)
+
+	cmd.Dir = dir
+
+	res, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+
+	if len(excludePath) > 0 {
+		s := string(res)
+		for _, path := range excludePath {
+			s = strings.ReplaceAll(string(res), path, "")
+		}
+		res = []byte(s)
+	}
+
+	if len(appendPatch) > 0 {
+		s := string(res)
+		for _, path := range appendPatch {
+			s = fmt.Sprintf("%s\n%s", s, path)
+		}
+		res = []byte(s)
+	}
+
+	return os.WriteFile(dir+"/diff.txt", res, 0666)
+}
+
+func SwitchBranch(dir string, branch string) error {
+	cmd := exec.Command("git", "checkout", branch)
+	cmd.Dir = dir
+	_, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func AddSafeDirectory(dir string, containerName string) error {
+	safeCommand := getCommand(gitSafeDirectory, containerName)
+	cmd := exec.Command(safeCommand[0], safeCommand[1:]...)
+	cmd.Dir = dir
+	_, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	return nil
+}

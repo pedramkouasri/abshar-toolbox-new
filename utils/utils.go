@@ -2,12 +2,30 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
+
+var currentDirectory string
+
+func init() {
+	currentDirectory, _ = os.Getwd()
+
+	os.RemoveAll(currentDirectory + "/temp")
+
+	err := os.Mkdir(currentDirectory+"/temp", 0755)
+	if err != nil {
+		if os.IsExist(err) {
+			fmt.Println("The directory named", currentDirectory+"/temp", "exists")
+		} else {
+			log.Fatalln(err)
+		}
+	}
+}
 
 /*
 *

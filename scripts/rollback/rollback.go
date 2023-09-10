@@ -30,7 +30,7 @@ func (rb rollbackService) Handle() error {
 	defer cancel()
 
 	p, _ := strconv.Atoi(string(db.NewBoltDB().Get("baadbaan")))
-	bs := baadbaan.NewBaadbaanRollback(rb.cnf, "15-10", p)
+	bs := baadbaan.NewRollback(rb.cnf, "15-10", p)
 
 	wg.Add(1)
 	go func() {

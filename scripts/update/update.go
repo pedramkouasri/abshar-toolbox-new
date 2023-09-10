@@ -26,7 +26,7 @@ func (us updateService) Handle() error {
 	loading := loading.NewLoading([]string{"baadbaan"}, wg)
 
 	us.cnf.SetStartTime()
-	bs := baadbaan.NewBaadbaan(us.cnf, "15-10", loading)
+	bs := baadbaan.NewUpdate(us.cnf, "15-10", loading)
 
 	hasError := make(chan bool)
 
