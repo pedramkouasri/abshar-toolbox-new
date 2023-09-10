@@ -31,47 +31,59 @@ func NewGenerator(cnf config.Config, tag1 string, tag2 string, loading contracts
 	}
 
 	return &baadbaan{
+		tempDir:       cnf.TempDir + "/baadbaan",
+		outFile:       cnf.TempDir + "/builds/baadbaan.tar.gz",
 		dir:           path.Join(cnf.DockerComposeDir, "baadbaan_new"),
 		tag1:          tag1,
 		tag2:          tag2,
 		serviceName:   "baadbaan",
-		containerName: "baadbaan_new",
+		containerName: "baadbaan_php",
 		env:           utils.LoadEnv(path.Join(cnf.DockerComposeDir, "baadbaan_new")),
 		percent:       0,
+		loading:       loading,
 	}
+}
+
+func (b *baadbaan) GetFilePath() string {
+	return b.outFile
 }
 
 func (b *baadbaan) Generate(ctx context.Context) error {
 
-	completeSignal := make(chan bool)
+	completeSignal := make(chan error)
 	go func() {
 		defer close(completeSignal)
 		if err := b.runGenerate(ctx); err != nil {
-			completeSignal <- false
+			completeSignal <- err
 		}
 	}()
 
 	select {
-	case res, ok := <-completeSignal:
+	case err, ok := <-completeSignal:
 		if !ok {
-			logger.Info(fmt.Sprintf("Service Rollback %s Completed", b.serviceName))
+			logger.Info(fmt.Sprintf("Service Generate Package %s Completed", b.serviceName))
 			return nil
 		}
 
-		if res {
-			return nil
+		if err != nil {
+			return fmt.Errorf("Service Generate Package %s is failed: %v", b.serviceName, err)
 		}
 
-		return fmt.Errorf("Service Rollback %s is failed", b.serviceName)
+		return nil
 
 	case <-ctx.Done():
-		logger.Info(fmt.Sprintf("%s Rollback Canceled", b.serviceName))
+		logger.Info(fmt.Sprintf("%s Generate Package Canceled", b.serviceName))
 		return ctx.Err()
 	}
 }
 
 func (b *baadbaan) runGenerate(ctx context.Context) error {
 	var err error
+
+	err = os.Mkdir(b.tempDir, 0755)
+	if err != nil {
+		return err
+	}
 
 	b.exec(ctx, 5, "Removed Tag", func() error {
 		utils.RemoveTag(b.dir, b.tag2)
@@ -86,20 +98,20 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 	}
 
 	err = b.exec(ctx, 20, "Get Diff Code", func() error {
-		return utils.GetDiff(b.dir, b.tag1, b.tag2, excludePath, appendPath)
+		return utils.GetDiff(b.dir, b.tag1, b.tag2, excludePath, appendPath, b.serviceName)
 	})
 	if err != nil {
 		return fmt.Errorf("Cannot Get Diff: %v", err)
 	}
 
 	err = b.exec(ctx, 30, "Create Tar File", func() error {
-		return utils.CreateTarFile(b.dir, b.serviceName)
+		return utils.CreateTarFile(b.dir, b.tempDir)
 	})
 	if err != nil {
 		return fmt.Errorf("Cannot Create Tar File: %v", err)
 	}
 
-	if utils.ComposerChangedOrPanic(b.serviceName) {
+	if utils.ComposerChangedOrPanic(b.tempDir) {
 
 		err = b.exec(ctx, 50, "Switched Branch", func() error {
 			return utils.SwitchBranch(b.dir, b.tag2)
@@ -108,9 +120,9 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 			return fmt.Errorf("Cannot Switch Branch: %v", err)
 		}
 
-		if err := utils.AddSafeDirectory(b.dir, b.containerName); err != nil {
-			return fmt.Errorf("Cannot Add Safe Directory: %v", err)
-		}
+		// if err := utils.AddSafeDirectory(b.dir, b.containerName); err != nil {
+		// 	return fmt.Errorf("Cannot Add Safe Directory: %v", err)
+		// }
 
 		err = b.exec(ctx, 60, "Composer Installed", func() error {
 			return utils.ComposerInstall(b.containerName)
@@ -120,14 +132,15 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 		}
 
 		err = b.exec(ctx, 70, "Generate Json Diff Vendor", func() error {
-			return utils.GenerateDiffJson(b.dir, b.serviceName, b.tag1, b.tag2)
+			return utils.GenerateDiffJson(b.dir, b.tempDir, b.tag1, b.tag2)
 		})
 		if err != nil {
-			return fmt.Errorf("Cannot Generate Json Diff Vendor: %v", err)
+			//TODO::remove
+			// return fmt.Errorf("Cannot Generate Json Diff Vendor: %v", err)
 		}
 
 		err = b.exec(ctx, 80, "Add Diff Package Vendor", func() error {
-			return utils.AddDiffPackageToTarFile(b.dir, b.serviceName)
+			return utils.AddDiffPackageToTarFile(b.dir, b.tempDir)
 		})
 		if err != nil {
 			return fmt.Errorf("Cannot Add Diff Package Vendor: %v", err)
@@ -136,14 +149,21 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 	}
 
 	err = b.exec(ctx, 90, "Copy Tar File To Temp Directory", func() error {
-		return os.Rename(b.dir+"/patch.tar", "/temp/"+b.serviceName+"/patch.tar")
+		return os.Rename(b.dir+"/patch.tar", b.tempDir+"/patch.tar")
 	})
 	if err != nil {
 		return fmt.Errorf("Cannot Copy Tar File To Temp Directory: %v", err)
 	}
 
+	err = b.exec(ctx, 98, "Gzip Tar File", func() error {
+		return utils.GzipTarFile(b.tempDir)
+	})
+	if err != nil {
+		return fmt.Errorf("Cannot Gzip Tar File: %v", err)
+	}
+
 	err = b.exec(ctx, 100, "Gzip Tar File", func() error {
-		return utils.GzipTarFile(b.serviceName)
+		return os.Rename(b.tempDir+"/patch.tar.gz", b.GetFilePath())
 	})
 	if err != nil {
 		return fmt.Errorf("Cannot Gzip Tar File: %v", err)

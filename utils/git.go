@@ -128,7 +128,7 @@ func Fetch(dir string) error {
 	return nil
 }
 
-func GetDiff(dir string, tag1 string, tag2 string, excludePath []string, appendPatch []string) error {
+func GetDiff(dir string, tag1 string, tag2 string, excludePath []string, appendPatch []string, serviceName string) error {
 	cmd := exec.Command("git", "diff", "--name-only", "--diff-filter", "ACMR", tag1, tag2)
 
 	cmd.Dir = dir
@@ -154,7 +154,17 @@ func GetDiff(dir string, tag1 string, tag2 string, excludePath []string, appendP
 		res = []byte(s)
 	}
 
-	return os.WriteFile(dir+"/diff.txt", res, 0666)
+	currentDirectory, _ = os.Getwd()
+	outPath := currentDirectory + "/temp/" + serviceName + "/diff.txt"
+	// if FileExists(outPath) == false {
+	// 	if _, err := os.Create(outPath); err != nil {
+	// 		return fmt.Errorf("can not create %s file %v", outPath, err)
+	// 	}
+	// }
+
+	// return ioutil.WriteFile(outPath, res, 0666)
+
+	return os.WriteFile(outPath, res, 0666)
 }
 
 func SwitchBranch(dir string, branch string) error {

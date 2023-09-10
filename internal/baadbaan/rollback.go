@@ -15,7 +15,7 @@ func NewRollback(cnf config.Config, version string, percent int) *baadbaan {
 		dir:           path.Join(cnf.DockerComposeDir, "baadbaan_new"),
 		branch:        fmt.Sprintf("patch-before-update-%s-%d", version, cnf.GetStartTime()),
 		serviceName:   "baadbaan",
-		containerName: "baadbaan_new",
+		containerName: "baadbaan_php",
 		env:           utils.LoadEnv(path.Join(cnf.DockerComposeDir, "baadbaan_new")),
 		percent:       percent,
 	}

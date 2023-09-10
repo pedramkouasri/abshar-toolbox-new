@@ -2,8 +2,6 @@ package loading
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 	"sync"
 
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/db"
@@ -62,9 +60,9 @@ func (p *process) Update(service_name string, percent int) {
 }
 
 func (p *process) print() {
-	cmdy := exec.Command("clear") //Linux example, its tested
-	cmdy.Stdout = os.Stdout
-	cmdy.Run()
+	// cmdy := exec.Command("clear") //Linux example, its tested
+	// cmdy.Stdout = os.Stdout
+	// cmdy.Run()
 
 	for serviceName, percent := range p.items {
 		fmt.Print(serviceName, ":[")

@@ -3,7 +3,6 @@ package utils
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -93,10 +92,10 @@ func ConfigClear(dir string) error {
 	return nil
 }
 
-func ComposerChangedOrPanic(serviceName string) bool {
-	diffFile, err := os.Open(fmt.Sprintf("/temp/%s/diff.txt", serviceName))
+func ComposerChangedOrPanic(tempDir string) bool {
+	diffFile, err := os.Open(fmt.Sprintf("%s/diff.txt", tempDir))
 	if err != nil {
-		log.Fatal(err)
+		panic(fmt.Sprintf("can not open %s/diff.txt: %v", tempDir, err))
 	}
 
 	defer diffFile.Close()
@@ -126,16 +125,16 @@ func ComposerInstall(containerName string) error {
 	cmd := exec.Command(command[0], command[1:]...)
 
 	if err := cmd.Run(); err != nil {
-		panic(err)
+		return err
 	}
 	return nil
 }
 
-func GenerateDiffJson(dir string, serviceName string, tag1, tag2 string) error {
+func GenerateDiffJson(dir string, tempDir string, tag1, tag2 string) error {
 
-	file, err := os.Create(fmt.Sprintf("/temp/%s/composer-lock-diff.json", serviceName))
+	file, err := os.Create(fmt.Sprintf("%s/composer-lock-diff.json", tempDir))
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("can not create composer-lock-diff.json :%v", err)
 	}
 
 	cmd := exec.Command("composer-lock-diff", "--from", tag1, "--to", tag2, "--json", "--pretty", "--only-prod")

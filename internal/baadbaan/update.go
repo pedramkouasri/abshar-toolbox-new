@@ -16,7 +16,7 @@ func NewUpdate(cnf config.Config, version string, loading contracts.Loader) *baa
 		dir:           path.Join(cnf.DockerComposeDir, "baadbaan_new"),
 		branch:        fmt.Sprintf("patch-before-update-%s-%d", version, cnf.GetStartTime()),
 		serviceName:   "baadbaan",
-		containerName: "baadbaan_new",
+		containerName: "baadbaan_php",
 		env:           utils.LoadEnv(path.Join(cnf.DockerComposeDir, "baadbaan_new")),
 		percent:       0,
 		loading:       loading,

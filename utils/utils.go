@@ -25,6 +25,8 @@ func init() {
 			log.Fatalln(err)
 		}
 	}
+
+	os.Mkdir(currentDirectory+"/temp/builds", 0755)
 }
 
 /*

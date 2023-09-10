@@ -21,9 +21,11 @@ const (
 type Config struct {
 	Server           Server `mapstructure:"server"`
 	DockerComposeDir string `mapstructure:"docker-compose-directory"`
+	TempDir          string
 	startedAt        time.Time
 	UpdateTimeOut    time.Duration
 	RollbackTimeOut  time.Duration
+	EncryptKey       string
 }
 
 var config Config
@@ -53,6 +55,10 @@ func init() {
 	config = *cnf
 	config.UpdateTimeOut = updateTimeOut
 	config.RollbackTimeOut = rollbackTimeOut
+
+	currentDirectory, _ := os.Getwd()
+	config.TempDir = currentDirectory + "/temp"
+	config.EncryptKey = "e10adc3949ba59abbe56e057f20f883e"
 }
 
 func (cnf *Config) SetStartTime() {

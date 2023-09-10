@@ -9,6 +9,8 @@ import (
 )
 
 type baadbaan struct {
+	tempDir       string
+	outFile       string
 	dir           string
 	branch        string
 	tag1          string
@@ -25,10 +27,9 @@ func (b *baadbaan) exec(ctx context.Context, percent int, message string, fn fun
 		return
 	}
 
-	//TODO::remove
-	// if err = fn(); err != nil {
-	// 	return
-	// }
+	if err = fn(); err != nil {
+		return
+	}
 
 	b.setPercent(percent)
 	logger.Info(message)

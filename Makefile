@@ -1,5 +1,5 @@
 build:
-	go build -o bin/abshar cmd/server/main.go
+	go build -o bin/abshar-toolbox main.go
 
 run:
-	build && bin/abshar
+	build && bin/abshar-toolbox

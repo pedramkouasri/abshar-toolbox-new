@@ -1,7 +1,7 @@
 package patch
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/generator"
@@ -9,6 +9,15 @@ import (
 )
 
 var PatchCmd = &cobra.Command{
+	Use:   "patch",
+	Short: "Create Patch",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
+	},
+}
+
+var generateCmd = &cobra.Command{
 	Use:                   "create PATH_OF_PACKAGE.JSON",
 	Short:                 "Create PATH_OF_PACKAGE.JSON",
 	Long:                  ``,
@@ -19,7 +28,11 @@ var PatchCmd = &cobra.Command{
 		pg := generator.NewPatchService(cnf)
 
 		if err := pg.Handle(args[0]); err != nil {
-			fmt.Errorf("Generate Package Faild %v", err)
+			log.Fatalf("Generate Package Faild %v", err)
 		}
 	},
+}
+
+func init() {
+	PatchCmd.AddCommand(generateCmd)
 }
