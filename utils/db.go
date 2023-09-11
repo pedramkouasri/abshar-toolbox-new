@@ -55,22 +55,14 @@ func BackupDatabase(fileName string, cnf *ConfigService) error {
 }
 
 func RestoreDatabase(fileName string, cnf *ConfigService) error {
-	err := os.Mkdir(backaupSqlDir, 0755)
-	if err != nil {
-		if os.IsExist(err) {
-			// fmt.Println("The directory named", backaupSqlDir, "exists")
-		} else {
-			return fmt.Errorf("Create backaupSql Directory Failed error is: %v", err)
-		}
-	}
-
 	sqlFileName := fmt.Sprintf("%s.sql", fileName)
-	if !FileExists(backaupSqlDir + "/" + sqlFileName) {
+	sqlPath := backaupSqlDir + "/" + sqlFileName
+	if !FileExists(sqlPath) {
 		return fmt.Errorf("File DB not found")
 	}
 
 	// Read the dump file
-	dumpFile, err := os.Open("path/to/your/database_dump.sql")
+	dumpFile, err := os.Open(sqlPath)
 	if err != nil {
 		return fmt.Errorf("File can not open %v", err)
 	}

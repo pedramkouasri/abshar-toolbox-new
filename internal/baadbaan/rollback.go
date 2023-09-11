@@ -56,15 +56,15 @@ func (b *baadbaan) runRollback(ctx context.Context) error {
 		return nil
 	}
 
-	// if err := utils.RestoreDatabase(b.branch, b.env); err != nil {
-	// 	return fmt.Errorf("Baadbaan Restore DB Failed %v ", err)
-	// }
+	if err := utils.RestoreDatabase(b.branch, b.env); err != nil {
+		return fmt.Errorf("Baadbaan Restore DB Failed %v ", err)
+	}
 
 	logger.Info("Baadbaan Restore DB")
 
-	// if err := utils.RestoreCode(b.dir); err != nil {
-	// 	return fmt.Errorf("Baadbaan Restore Code Failed %v ", err)
-	// }
+	if err := utils.RestoreCode(b.dir); err != nil {
+		return fmt.Errorf("Baadbaan Restore Code Failed %v ", err)
+	}
 
 	logger.Info("Baadbaan Restore Code")
 
