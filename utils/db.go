@@ -9,22 +9,27 @@ import (
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
 )
 
-const (
-	backaupSqlDir = "./backaupSql"
-)
+var backupSqlDir string
+
+func init() {
+	cd, _ := os.Getwd()
+	backupSqlDir = cd + "/backupSql"
+}
 
 func BackupDatabase(fileName string, dockerComposeDir string, cnf *ConfigService) error {
-	err := os.Mkdir(backaupSqlDir, 0755)
+	err := os.Mkdir(backupSqlDir, 0755)
 	if err != nil {
 		if os.IsExist(err) {
-			// fmt.Println("The directory named", backaupSqlDir, "exists")
+			// fmt.Println("The directory named", backupSqlDir, "exists")
 		} else {
-			return fmt.Errorf("Create backaupSql Directory Failed error is: %v", err)
+			return fmt.Errorf("Create backupSql Directory Failed error is: %v", err)
 		}
 	}
 
 	sqlFileName := fmt.Sprintf("%s.sql", fileName)
-	file, err := os.Create(backaupSqlDir + "/" + sqlFileName)
+	os.Remove(backupSqlDir + "/" + sqlFileName)
+
+	file, err := os.Create(backupSqlDir + "/" + sqlFileName)
 	if err != nil {
 		return fmt.Errorf("Create sql fileFailed error is: %v", err)
 	}
@@ -38,9 +43,8 @@ func BackupDatabase(fileName string, dockerComposeDir string, cnf *ConfigService
 	sqlCommand := fmt.Sprintf(sqlDumpCommand, username, password, host, port, datbase)
 
 	var command []string
-	command = strings.Fields(fmt.Sprintf(`docker compose -f %s run --rm %s %s`, dockerComposeDir, host, sqlCommand))
+	command = strings.Fields(fmt.Sprintf(`docker compose -f %s/docker-compose.yaml run --rm baadbaan_db %s`, dockerComposeDir, sqlCommand))
 
-	logger.Info(strings.Join(command, " "))
 	cmd := exec.Command(command[0], command[1:]...)
 
 	cmd.Stdout = file
@@ -56,7 +60,7 @@ func BackupDatabase(fileName string, dockerComposeDir string, cnf *ConfigService
 
 func RestoreDatabase(fileName string, dockerComposeDir string, cnf *ConfigService) error {
 	sqlFileName := fmt.Sprintf("%s.sql", fileName)
-	sqlPath := backaupSqlDir + "/" + sqlFileName
+	sqlPath := backupSqlDir + "/" + sqlFileName
 	if !FileExists(sqlPath) {
 		return fmt.Errorf("File DB not found")
 	}
@@ -76,12 +80,12 @@ func RestoreDatabase(fileName string, dockerComposeDir string, cnf *ConfigServic
 	sqlCommand := fmt.Sprintf(sqlRestoreDB, username, password, host, port, database)
 
 	var command []string
-	command = strings.Fields(fmt.Sprintf(`docker compose -f %s run --rm %s %s`, dockerComposeDir, host, sqlCommand))
+	command = strings.Fields(fmt.Sprintf("docker compose -f %s/docker-compose.yaml run --rm -exec -T baadbaan_db %s", dockerComposeDir, sqlCommand))
+
+	logger.Info(strings.Join(command, " "))
 
 	cmd := exec.Command(command[0], command[1:]...)
-
 	cmd.Stdin = dumpFile
-	cmd.Stderr = os.Stderr
 
 	_, err = cmd.CombinedOutput()
 	if err != nil {

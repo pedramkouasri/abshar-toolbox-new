@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sync"
+	"os"
+	"strings"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/db"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/rollback"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/update"
+	"github.com/pedramkousari/abshar-toolbox-new/types"
 	"github.com/pedramkousari/abshar-toolbox-new/utils"
 )
 
@@ -57,7 +59,6 @@ func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request)
 		}
 
 		fileSrc := cnf.DockerComposeDir + "/baadbaan_new/storage/app/patches/" + version
-		_ = fileSrc
 
 		if !utils.FileExists(fileSrc) {
 			w.WriteHeader(http.StatusBadRequest)
@@ -70,15 +71,17 @@ func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request)
 		db.StoreInit(version)
 		logger.Info("Started")
 
-		wg := sync.WaitGroup{}
-		wg.Add(1)
 		go func() {
-			defer wg.Done()
-			logger.Info("Run Go Routine Update")
+			diffPackages, err := Start(fileSrc, cnf)
+			if err != nil {
+				logger.Error(fmt.Errorf("Start Failed %v", err))
+				return
+			}
 
+			logger.Info("Run Go Routine Update")
 			up := update.NewUpdateService(cnf)
 
-			err := up.Handle(fileSrc)
+			err = up.Handle(diffPackages)
 			if err == nil {
 				logger.Info("Completed Update")
 				db.StoreSuccess()
@@ -88,15 +91,13 @@ func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request)
 			logger.Error(fmt.Errorf("Update Failed %v", err))
 
 			rol := rollback.NewRollbackService(cnf)
-			err = rol.Handle()
+			err = rol.Handle(diffPackages)
 			if err == nil {
 				logger.Info("Completed Rollback")
 				return
 			}
 			logger.Error(fmt.Errorf("Rollback Failed %v", err))
 		}()
-
-		wg.Wait()
 
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{
@@ -170,4 +171,55 @@ func stateHandle(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(&res); err != nil {
 		panic(err)
 	}
+}
+
+func Start(fileSrc string, cnf config.Config) ([]types.CreatePackageParams, error) {
+	if err := os.Mkdir("./temp", 0755); err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("create directory err: %s", err)
+		}
+	}
+	logger.Info("Created Temp Directory")
+
+	if err := utils.DecryptFile([]byte(cnf.EncryptKey), fileSrc, strings.TrimSuffix(fileSrc, ".enc")); err != nil {
+		return nil, fmt.Errorf("Decrypt File err: %s", err)
+	}
+
+	logger.Info("Decrypted File")
+
+	if err := utils.UntarGzip(strings.TrimSuffix(fileSrc, ".enc"), "./temp"); err != nil {
+		return nil, fmt.Errorf("UnZip File err: %s", err)
+	}
+	logger.Info("UnZiped File")
+
+	packagePathFile := "./temp/package.json"
+
+	if _, err := os.Stat(packagePathFile); err != nil {
+		return nil, fmt.Errorf("package.json is err: %s", err)
+	}
+
+	logger.Info("Exists package.json")
+
+	file, err := os.Open(packagePathFile)
+	if err != nil {
+		return nil, fmt.Errorf("open package.json is err: %s", err)
+	}
+	logger.Info("Opened package.json")
+
+	pkg := []types.Packages{}
+
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&pkg)
+	if err != nil {
+		return nil, fmt.Errorf("decode package.json is err: %s", err)
+	}
+
+	logger.Info("Decode package.json")
+
+	diffPackages := utils.GetPackageDiff(pkg)
+	if len(diffPackages) == 0 {
+		return nil, fmt.Errorf("Not Found Diff Packages")
+	}
+
+	return diffPackages, nil
 }

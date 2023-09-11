@@ -97,16 +97,22 @@ func gitCommit(dir string, branch string) error {
 }
 
 func RestoreCode(dir string) error {
+	if err := AddSafeDirectory(dir); err != nil {
+		return fmt.Errorf("Cannot git Safe Direectory :%v", err)
+	}
+
 	cmd := exec.Command("git", "reset", "--hard")
 	cmd.Dir = dir
+	cmd.Stderr = os.Stderr
 	if _, err := cmd.Output(); err != nil {
-		return err
+		return fmt.Errorf("Cannot git reset :%v", err)
 	}
 
 	cmd = exec.Command("git", "clean", "-fd")
 	cmd.Dir = dir
+	cmd.Stderr = os.Stderr
 	if _, err := cmd.Output(); err != nil {
-		return err
+		return fmt.Errorf("Cannot git clean :%v", err)
 	}
 
 	return nil
@@ -177,9 +183,9 @@ func SwitchBranch(dir string, branch string) error {
 	return nil
 }
 
-func AddSafeDirectory(dir string, containerName string) error {
-	safeCommand := getCommand(gitSafeDirectory, containerName)
-	cmd := exec.Command(safeCommand[0], safeCommand[1:]...)
+func AddSafeDirectory(dir string) error {
+	command := strings.Split(gitSafeDirectory, " ")
+	cmd := exec.Command(command[0], command[1:]...)
 	cmd.Dir = dir
 	_, err := cmd.Output()
 	if err != nil {

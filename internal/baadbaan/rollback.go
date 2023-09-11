@@ -18,31 +18,33 @@ func NewRollback(cnf config.Config, version string, percent int) *baadbaan {
 		containerName: "baadbaan_php",
 		env:           utils.LoadEnv(path.Join(cnf.DockerComposeDir, "baadbaan_new")),
 		percent:       percent,
+		tag2:          version,
+		cnf:           cnf,
 	}
 }
 
 func (b *baadbaan) Rollback(ctx context.Context) error {
 
-	completeSignal := make(chan bool)
+	completeSignal := make(chan error)
 	go func() {
 		defer close(completeSignal)
 		if err := b.runRollback(ctx); err != nil {
-			completeSignal <- false
+			completeSignal <- err
 		}
 	}()
 
 	select {
-	case res, ok := <-completeSignal:
+	case err, ok := <-completeSignal:
 		if !ok {
 			logger.Info(fmt.Sprintf("Service Rollback %s Completed", b.serviceName))
 			return nil
 		}
 
-		if res {
-			return nil
+		if err != nil {
+			return fmt.Errorf("Service Rollback Package %s is failed: %v", b.serviceName, err)
 		}
 
-		return fmt.Errorf("Service Rollback %s is failed", b.serviceName)
+		return nil
 
 	case <-ctx.Done():
 		logger.Info(fmt.Sprintf("%s Rollback Canceled", b.serviceName))
@@ -56,7 +58,7 @@ func (b *baadbaan) runRollback(ctx context.Context) error {
 		return nil
 	}
 
-	if err := utils.RestoreDatabase(b.branch, b.cnf.DockerComposeDir, b.env); err != nil {
+	if err := utils.RestoreDatabase(b.tag2, b.cnf.DockerComposeDir, b.env); err != nil {
 		return fmt.Errorf("Baadbaan Restore DB Failed %v ", err)
 	}
 

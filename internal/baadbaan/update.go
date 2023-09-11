@@ -15,6 +15,7 @@ func NewUpdate(cnf config.Config, version string, loading contracts.Loader) *baa
 	return &baadbaan{
 		dir:           path.Join(cnf.DockerComposeDir, "baadbaan_new"),
 		branch:        fmt.Sprintf("patch-before-update-%s-%d", version, cnf.GetStartTime()),
+		tag2:          version,
 		serviceName:   "baadbaan",
 		containerName: "baadbaan_php",
 		env:           utils.LoadEnv(path.Join(cnf.DockerComposeDir, "baadbaan_new")),
@@ -71,7 +72,7 @@ func (b *baadbaan) runUpdate(ctx context.Context) error {
 	}
 
 	err = b.exec(ctx, 40, "Baadbaan Backup Database Complete", func() error {
-		return utils.BackupDatabase(b.branch, b.cnf.DockerComposeDir, b.env)
+		return utils.BackupDatabase(b.tag2, b.cnf.DockerComposeDir, b.env)
 	})
 	if err != nil {
 		return fmt.Errorf("Backup Database Failed Error Is: %s", err)

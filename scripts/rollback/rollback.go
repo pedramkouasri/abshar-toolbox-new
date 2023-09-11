@@ -9,6 +9,7 @@ import (
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/baadbaan"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/db"
+	"github.com/pedramkousari/abshar-toolbox-new/types"
 )
 
 type rollbackService struct {
@@ -21,24 +22,27 @@ func NewRollbackService(cnf config.Config) rollbackService {
 	}
 }
 
-func (rb rollbackService) Handle() error {
-	wg := new(sync.WaitGroup)
-
-	hasError := make(chan bool)
-
+func (rb rollbackService) Handle(diffPackages []types.CreatePackageParams) error {
 	ctx, cancel := context.WithTimeout(context.Background(), rb.cnf.RollbackTimeOut)
 	defer cancel()
 
-	p, _ := strconv.Atoi(string(db.NewBoltDB().Get("baadbaan")))
-	bs := baadbaan.NewRollback(rb.cnf, "15-10", p)
+	wg := new(sync.WaitGroup)
+	hasError := make(chan error)
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := bs.Rollback(ctx); err != nil {
-			hasError <- true
+	for _, pac := range diffPackages {
+		if pac.ServiceName == "baadbaan" {
+			p, _ := strconv.Atoi(string(db.NewBoltDB().Get("baadbaan")))
+			bs := baadbaan.NewRollback(rb.cnf, pac.Tag2, p)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := bs.Rollback(ctx); err != nil {
+					hasError <- err
+				}
+			}()
 		}
-	}()
+	}
 
 	go func() {
 		wg.Wait()
@@ -52,8 +56,8 @@ func (rb rollbackService) Handle() error {
 				return nil
 			}
 
-			if res {
-				return fmt.Errorf("Recived Error In Rollback")
+			if res != nil {
+				return fmt.Errorf("Recived Error: %v", res)
 			}
 
 		case <-ctx.Done():
