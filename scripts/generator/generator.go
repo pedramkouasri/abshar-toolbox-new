@@ -84,7 +84,7 @@ func (us patchService) Handle(packagePathFile string) error {
 		select {
 		case res, ok := <-hasError:
 			if !ok {
-				if err := exportPatch(version, us.cnf); err != nil {
+				if err := exportPatch(version, packagePathFile, us.cnf); err != nil {
 					return err
 				}
 
@@ -103,14 +103,14 @@ func (us patchService) Handle(packagePathFile string) error {
 
 }
 
-func exportPatch(version string, cnf config.Config) error {
+func exportPatch(version string, packagePathFile string, cnf config.Config) error {
 	tempBuildPath := "./temp/builds"
 	entries, err := os.ReadDir(tempBuildPath)
 	if err != nil {
 		return err
 	}
 
-	files := []string{}
+	files := []string{packagePathFile}
 	for _, e := range entries {
 		files = append(files, tempBuildPath+"/"+e.Name())
 	}

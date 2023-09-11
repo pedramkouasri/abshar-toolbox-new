@@ -11,6 +11,7 @@ import (
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/rollback"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/update"
+	"github.com/pedramkousari/abshar-toolbox-new/utils"
 )
 
 type ResponseServer struct {
@@ -58,20 +59,16 @@ func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request)
 		fileSrc := cnf.DockerComposeDir + "/baadbaan_new/storage/app/patches/" + version
 		_ = fileSrc
 
-		//TODO::remove comment
-		// if !utils.FileExists(fileSrc) {
-		// 	w.WriteHeader(http.StatusBadRequest)
-		// 	w.Write([]byte(`{
-		// 		"message": "file not exists"
-		// 	}`))
-		// 	return
-		// }
+		if !utils.FileExists(fileSrc) {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{
+				"message": "file not exists"
+			}`))
+			return
+		}
 
 		db.StoreInit(version)
 		logger.Info("Started")
-
-		updateResultChan := make(chan bool)
-		defer close(updateResultChan)
 
 		wg := sync.WaitGroup{}
 		wg.Add(1)
@@ -81,7 +78,7 @@ func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request)
 
 			up := update.NewUpdateService(cnf)
 
-			err := up.Handle()
+			err := up.Handle(fileSrc)
 			if err == nil {
 				logger.Info("Completed Update")
 				db.StoreSuccess()
