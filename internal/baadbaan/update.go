@@ -125,11 +125,18 @@ func (b *baadbaan) runUpdate(ctx context.Context) error {
 		return fmt.Errorf("Config Cache Failed Error Is: %s", err)
 	}
 
-	err = b.exec(ctx, 100, "Baadbaan Changed Permission", func() error {
+	err = b.exec(ctx, 99, "Baadbaan Changed Permission", func() error {
 		return utils.ChangePermision("www-data", b.dir)
 	})
 	if err != nil {
 		return fmt.Errorf("Change Permission has Error : %s", err)
+	}
+
+	err = b.exec(ctx, 100, "Baadbaan Restart Service", func() error {
+		return utils.RestartService(b.containerName)
+	})
+	if err != nil {
+		return fmt.Errorf("Cannot Restart Service : %s", err)
 	}
 
 	return nil
