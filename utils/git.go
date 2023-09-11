@@ -86,7 +86,7 @@ func gitCommit(dir string, branch string) error {
 		return fmt.Errorf("Git Set Safe Directory Failed Error Is: %v", err)
 	}
 
-	cmd = exec.Command("git", "commit", "-m", fmt.Sprintf("backup befor update patch %s", branch, current_time.Unix()))
+	cmd = exec.Command("git", "commit", "-m", fmt.Sprintf("backup befor update patch %s time: %d", branch, current_time.Unix()))
 	cmd.Stderr = os.Stderr
 	cmd.Dir = dir
 	if err := cmd.Run(); err != nil {
