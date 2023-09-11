@@ -25,26 +25,26 @@ func NewUpdate(cnf config.Config, version string, loading contracts.Loader) *baa
 
 func (b *baadbaan) Update(ctx context.Context) error {
 
-	completeSignal := make(chan bool)
+	completeSignal := make(chan error)
 	go func() {
 		defer close(completeSignal)
 		if err := b.runUpdate(ctx); err != nil {
-			completeSignal <- false
+			completeSignal <- err
 		}
 	}()
 
 	select {
-	case res, ok := <-completeSignal:
+	case err, ok := <-completeSignal:
 		if !ok {
 			logger.Info(fmt.Sprintf("Service Update %s Completed", b.serviceName))
 			return nil
 		}
 
-		if res {
-			return nil
+		if err != nil {
+			return fmt.Errorf("Service Update Package %s is failed: %v", b.serviceName, err)
 		}
 
-		return fmt.Errorf("Service Update %s is failed", b.serviceName)
+		return nil
 
 	case <-ctx.Done():
 		logger.Info(fmt.Sprintf("%s Canceled", b.serviceName))
