@@ -6,14 +6,14 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/spf13/viper"
+	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
 )
 
 const (
 	backaupSqlDir = "./backaupSql"
 )
 
-func BackupDatabase(fileName string, cnf *ConfigService) error {
+func BackupDatabase(fileName string, dockerComposeDir string, cnf *ConfigService) error {
 	err := os.Mkdir(backaupSqlDir, 0755)
 	if err != nil {
 		if os.IsExist(err) {
@@ -38,9 +38,9 @@ func BackupDatabase(fileName string, cnf *ConfigService) error {
 	sqlCommand := fmt.Sprintf(sqlDumpCommand, username, password, host, port, datbase)
 
 	var command []string
-	composeDir := viper.GetString("patch.update.docker-compose-directory") + "/docker-compose.yaml"
-	command = strings.Fields(fmt.Sprintf(`docker compose -f %s run --rm %s %s`, composeDir, host, sqlCommand))
+	command = strings.Fields(fmt.Sprintf(`docker compose -f %s run --rm %s %s`, dockerComposeDir, host, sqlCommand))
 
+	logger.Info(strings.Join(command, " "))
 	cmd := exec.Command(command[0], command[1:]...)
 
 	cmd.Stdout = file
@@ -54,7 +54,7 @@ func BackupDatabase(fileName string, cnf *ConfigService) error {
 	return nil
 }
 
-func RestoreDatabase(fileName string, cnf *ConfigService) error {
+func RestoreDatabase(fileName string, dockerComposeDir string, cnf *ConfigService) error {
 	sqlFileName := fmt.Sprintf("%s.sql", fileName)
 	sqlPath := backaupSqlDir + "/" + sqlFileName
 	if !FileExists(sqlPath) {
@@ -76,8 +76,7 @@ func RestoreDatabase(fileName string, cnf *ConfigService) error {
 	sqlCommand := fmt.Sprintf(sqlRestoreDB, username, password, host, port, database)
 
 	var command []string
-	composeDir := viper.GetString("patch.update.docker-compose-directory") + "/docker-compose.yaml"
-	command = strings.Fields(fmt.Sprintf(`docker compose -f %s run --rm %s %s`, composeDir, host, sqlCommand))
+	command = strings.Fields(fmt.Sprintf(`docker compose -f %s run --rm %s %s`, dockerComposeDir, host, sqlCommand))
 
 	cmd := exec.Command(command[0], command[1:]...)
 

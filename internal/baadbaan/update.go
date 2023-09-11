@@ -20,6 +20,7 @@ func NewUpdate(cnf config.Config, version string, loading contracts.Loader) *baa
 		env:           utils.LoadEnv(path.Join(cnf.DockerComposeDir, "baadbaan_new")),
 		percent:       0,
 		loading:       loading,
+		cnf:           cnf,
 	}
 }
 
@@ -70,7 +71,7 @@ func (b *baadbaan) runUpdate(ctx context.Context) error {
 	}
 
 	err = b.exec(ctx, 40, "Baadbaan Backup Database Complete", func() error {
-		return utils.BackupDatabase(b.branch, b.env)
+		return utils.BackupDatabase(b.branch, b.cnf.DockerComposeDir, b.env)
 	})
 	if err != nil {
 		return fmt.Errorf("Backup Database Failed Error Is: %s", err)

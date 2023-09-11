@@ -56,7 +56,7 @@ func (b *baadbaan) runRollback(ctx context.Context) error {
 		return nil
 	}
 
-	if err := utils.RestoreDatabase(b.branch, b.env); err != nil {
+	if err := utils.RestoreDatabase(b.branch, b.cnf.DockerComposeDir, b.env); err != nil {
 		return fmt.Errorf("Baadbaan Restore DB Failed %v ", err)
 	}
 
