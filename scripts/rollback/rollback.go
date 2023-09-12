@@ -8,6 +8,8 @@ import (
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/baadbaan"
+	"github.com/pedramkousari/abshar-toolbox-new/internal/discovery"
+	"github.com/pedramkousari/abshar-toolbox-new/internal/technical"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/db"
 	"github.com/pedramkousari/abshar-toolbox-new/types"
 )
@@ -38,6 +40,32 @@ func (rb rollbackService) Handle(diffPackages []types.CreatePackageParams) error
 			go func() {
 				defer wg.Done()
 				if err := bs.Rollback(ctx); err != nil {
+					hasError <- err
+				}
+			}()
+		}
+
+		if pac.ServiceName == "technical" {
+			p, _ := strconv.Atoi(string(db.NewBoltDB().Get("technical")))
+			ts := technical.NewRollback(rb.cnf, pac.Tag2, p)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := ts.Rollback(ctx); err != nil {
+					hasError <- err
+				}
+			}()
+		}
+
+		if pac.ServiceName == "discovery" {
+			p, _ := strconv.Atoi(string(db.NewBoltDB().Get("discovery")))
+			dis := discovery.NewRollback(rb.cnf, pac.Tag2, p)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := dis.Rollback(ctx); err != nil {
 					hasError <- err
 				}
 			}()

@@ -9,6 +9,9 @@ import (
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/baadbaan"
+	"github.com/pedramkousari/abshar-toolbox-new/internal/discovery"
+	"github.com/pedramkousari/abshar-toolbox-new/internal/docker"
+	"github.com/pedramkousari/abshar-toolbox-new/internal/technical"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/loading"
 	"github.com/pedramkousari/abshar-toolbox-new/types"
 	"github.com/pedramkousari/abshar-toolbox-new/utils"
@@ -69,6 +72,54 @@ func (us patchService) Handle(packagePathFile string) error {
 			go func() {
 				defer wg.Done()
 				if err := bs.Generate(ctx); err != nil {
+					hasError <- err
+				}
+			}()
+		}
+
+		if pac.ServiceName == "technical" {
+			ts := technical.NewGenerator(us.cnf, pac.Tag1, pac.Tag2, loading)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := ts.Generate(ctx); err != nil {
+					hasError <- err
+				}
+			}()
+		}
+
+		if pac.ServiceName == "docker" {
+			ds := docker.NewGenerator(us.cnf, pac.Tag1, pac.Tag2, loading)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := ds.Generate(ctx); err != nil {
+					hasError <- err
+				}
+			}()
+		}
+
+		if pac.ServiceName == "toolbox" {
+			tos := docker.NewGenerator(us.cnf, pac.Tag1, pac.Tag2, loading)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := tos.Generate(ctx); err != nil {
+					hasError <- err
+				}
+			}()
+		}
+
+		if pac.ServiceName == "discovery" {
+			dis := discovery.NewGenerator(us.cnf, pac.Tag1, pac.Tag2, loading)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := dis.Generate(ctx); err != nil {
 					hasError <- err
 				}
 			}()

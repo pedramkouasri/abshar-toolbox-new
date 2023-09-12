@@ -70,5 +70,12 @@ func (b *baadbaan) runRollback(ctx context.Context) error {
 
 	logger.Info("Baadbaan Restore Code")
 
+	if b.percent == 100 {
+		if err := utils.RestartService(b.containerName, b.cnf.DockerComposeDir); err != nil {
+			return fmt.Errorf("Cannot Baadbaan Restart Service In Rollback : %s", err)
+		}
+		logger.Info("Baadbaan Restart Service In Rollback")
+	}
+
 	return nil
 }

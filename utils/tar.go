@@ -3,6 +3,7 @@ package utils
 import (
 	"archive/tar"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -112,7 +113,6 @@ func AddDiffPackageToTarFile(dir string, tempDir string) error {
 }
 
 func getDiffPackages(tempDir string) (map[string][]string, error) {
-	//TODO::remove
 	file, err := os.Open(fmt.Sprintf("%s/composer-lock-diff.json", tempDir))
 	if err != nil {
 		return nil, fmt.Errorf("cannot open composer-lock-diff %v", err)
@@ -125,10 +125,9 @@ func getDiffPackages(tempDir string) (map[string][]string, error) {
 
 	changesInstance := ChangesType{}
 
-	//Todo::remove
-	// if err := json.NewDecoder(file).Decode(&changesInstance); err != nil {
-	// 	return map[string][]string{}, fmt.Errorf("Cannot Decode composer-lock-diff :%v", err)
-	// }
+	if err := json.NewDecoder(file).Decode(&changesInstance); err != nil {
+		return map[string][]string{}, fmt.Errorf("Cannot Decode composer-lock-diff :%v", err)
+	}
 
 	for index, packageName := range changesInstance.Changes {
 		if packageName[1] == "REMOVED" {

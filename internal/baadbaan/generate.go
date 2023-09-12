@@ -135,8 +135,7 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 			return utils.GenerateDiffJson(b.dir, b.tempDir, b.tag1, b.tag2)
 		})
 		if err != nil {
-			//TODO::remove
-			// return fmt.Errorf("Cannot Generate Json Diff Vendor: %v", err)
+			return fmt.Errorf("Cannot Generate Json Diff Vendor: %v", err)
 		}
 
 		err = b.exec(ctx, 80, "Add Diff Package Vendor", func() error {

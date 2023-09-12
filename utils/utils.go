@@ -111,3 +111,20 @@ func RestartService(containerName string, dockerComposeDir string) error {
 
 	return nil
 }
+
+func DockerDown(dockerComposeDir string) error {
+	var command []string
+	composeDir := dockerComposeDir + "/docker-compose.yaml"
+	command = strings.Fields(fmt.Sprintf(`docker compose -f %s down`, composeDir))
+
+	cmd := exec.Command(command[0], command[1:]...)
+	cmd.Stdout = nil
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
