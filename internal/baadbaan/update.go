@@ -135,10 +135,10 @@ func (b *baadbaan) runUpdate(ctx context.Context) error {
 	}
 
 	err = b.exec(ctx, 100, "Baadbaan Restart Service", func() error {
-		return utils.RestartService(b.containerName)
+		return utils.RestartService(b.containerName, b.cnf.DockerComposeDir)
 	})
 	if err != nil {
-		return fmt.Errorf("Cannot Restart Service : %s", err)
+		return fmt.Errorf("Cannot Restart Service Baadbaan : %s", err)
 	}
 
 	return nil

@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"github.com/spf13/viper"
 )
 
 var currentDirectory string
@@ -97,17 +95,18 @@ func FileExists(filename string) bool {
 	return !info.IsDir()
 }
 
-func RestartService(containerName string) error {
+func RestartService(containerName string, dockerComposeDir string) error {
 	var command []string
-	composeDir := viper.GetString("patch.update.docker-compose-directory") + "/docker-compose.yaml"
+	composeDir := dockerComposeDir + "/docker-compose.yaml"
 	command = strings.Fields(fmt.Sprintf(`docker compose -f %s restart %s`, composeDir, containerName))
 
 	cmd := exec.Command(command[0], command[1:]...)
+	cmd.Stdout = nil
 	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("Dump sql Failed error is: %v", err)
+		return err
 	}
 
 	return nil

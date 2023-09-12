@@ -89,6 +89,7 @@ func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request)
 			}
 
 			logger.Error(fmt.Errorf("Update Failed %v", err))
+			db.StoreError(err)
 
 			rol := rollback.NewRollbackService(cnf)
 			err = rol.Handle(diffPackages)
