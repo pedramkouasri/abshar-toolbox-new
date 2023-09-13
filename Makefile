@@ -1,8 +1,8 @@
 build:
-	go build -o bin/abshar-toolbox main.go
+	go build -o bin/update-toolbox main.go
 
 run:
-	build && bin/abshar-toolbox
+	build && bin/update-toolbox
 
 generate:
-	build && bin/abshar-toolbox patch create package.json
+	build && bin/update-toolbox patch create package.json

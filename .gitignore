@@ -5,3 +5,4 @@ builds
 my.db
 app.log
 backupSql
+bin

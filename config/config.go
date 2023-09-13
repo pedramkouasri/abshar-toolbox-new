@@ -39,12 +39,12 @@ func init() {
 	viper.AddConfigPath(home)
 	viper.AddConfigPath(".")
 	viper.SetConfigType("yaml")
-	viper.SetConfigName("abshar-toolbox")
+	viper.SetConfigName("update-toolbox")
 
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		panic("Not Exists abshar-toolbox.yaml")
+		panic("Not Exists update-toolbox.yaml")
 	}
 
 	cnf := new(Config)
