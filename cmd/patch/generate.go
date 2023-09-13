@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
+	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/generator"
 	"github.com/spf13/cobra"
 )
@@ -28,8 +29,12 @@ var generateCmd = &cobra.Command{
 		pg := generator.NewPatchService(cnf)
 
 		if err := pg.Handle(args[0]); err != nil {
+			logger.Error(err)
 			log.Fatalf("Generate Package Faild %v", err)
+			return
 		}
+
+		log.Println("Package Build :-)")
 	},
 }
 

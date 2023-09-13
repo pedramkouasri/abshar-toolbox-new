@@ -3,3 +3,6 @@ build:
 
 run:
 	build && bin/abshar-toolbox
+
+generate:
+	build && bin/abshar-toolbox patch create package.json

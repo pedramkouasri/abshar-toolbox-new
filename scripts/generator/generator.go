@@ -12,6 +12,7 @@ import (
 	"github.com/pedramkousari/abshar-toolbox-new/internal/discovery"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/docker"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/technical"
+	"github.com/pedramkousari/abshar-toolbox-new/internal/toolbox"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/loading"
 	"github.com/pedramkousari/abshar-toolbox-new/types"
 	"github.com/pedramkousari/abshar-toolbox-new/utils"
@@ -102,7 +103,7 @@ func (us patchService) Handle(packagePathFile string) error {
 		}
 
 		if pac.ServiceName == "toolbox" {
-			tos := docker.NewGenerator(us.cnf, pac.Tag1, pac.Tag2, loading)
+			tos := toolbox.NewGenerator(us.cnf, pac.Tag1, pac.Tag2, loading)
 
 			wg.Add(1)
 			go func() {

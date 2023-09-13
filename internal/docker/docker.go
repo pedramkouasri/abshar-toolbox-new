@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/contracts"
@@ -25,11 +26,11 @@ type docker struct {
 
 func (d *docker) exec(ctx context.Context, percent int, message string, fn func() error) (err error) {
 	if err = ctx.Err(); err != nil {
-		return
+		return fmt.Errorf("context is err :%v", err)
 	}
 
 	if err = fn(); err != nil {
-		return
+		return err
 	}
 
 	d.setPercent(percent)

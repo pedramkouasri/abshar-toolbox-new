@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
@@ -41,6 +42,7 @@ func NewGenerator(cnf config.Config, tag1 string, tag2 string, loading contracts
 		env:           utils.LoadEnv(path.Join(cnf.DockerComposeDir, "baadbaan_new")),
 		percent:       0,
 		loading:       loading,
+		cnf:           cnf,
 	}
 }
 
@@ -147,6 +149,13 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 
 	}
 
+	// err = b.exec(ctx, 80, "Add PhpExcel", func() error {
+	// 	return addPhpExcellToTarFile(b.dir, b.cnf.DockerComposeDir)
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Cannot Add PhpExcel: %v", err)
+	// }
+
 	err = b.exec(ctx, 90, "Copy Tar File To Temp Directory", func() error {
 		return os.Rename(b.dir+"/patch.tar", b.tempDir+"/patch.tar")
 	})
@@ -168,5 +177,18 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 		return fmt.Errorf("Cannot Gzip Tar File: %v", err)
 	}
 
+	return nil
+}
+
+func addPhpExcellToTarFile(dir string, dockerComposeDir string) error {
+	cmd := exec.Command("tar", "--transform", "s,^,vendor/,S", "-rf", dir+"/patch.tar", "phpexcel")
+
+	cmd.Dir = dockerComposeDir
+	cmd.Stderr = os.Stderr
+	// cmd.Stdout = os.Stdout
+
+	if err := cmd.Run(); err != nil {
+		return err
+	}
 	return nil
 }
