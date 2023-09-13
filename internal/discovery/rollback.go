@@ -52,11 +52,16 @@ func (d *discovery) Rollback(ctx context.Context) error {
 }
 
 func (d *discovery) runRollback(ctx context.Context) error {
-	if err := utils.RestoreCode(d.dir); err != nil {
-		return fmt.Errorf("Technical Restore Code Failed %v ", err)
+	//run when service not exists
+	if !utils.DirectoryExists(d.dir) {
+		return nil
 	}
 
-	logger.Info("Technical Restore Code")
+	if err := utils.RestoreCode(d.dir); err != nil {
+		return fmt.Errorf("Discovery Restore Code Failed %v ", err)
+	}
+
+	logger.Info("Discovery Restore Code")
 
 	if d.percent == 100 {
 		if err := utils.RestartService(d.containerName, d.cnf.DockerComposeDir); err != nil {

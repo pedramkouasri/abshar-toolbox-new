@@ -56,6 +56,13 @@ func (d *discovery) Update(ctx context.Context) error {
 func (d *discovery) runUpdate(ctx context.Context) error {
 	var err error
 
+	//run when service not exists
+	if !utils.DirectoryExists(d.dir) {
+		d.setPercent(100)
+		logger.Info("Service Asset Discovery Not Exists")
+		return nil
+	}
+
 	err = d.exec(ctx, 30, "Discovery Backup File Complete With git", func() error {
 		return utils.BackupFileWithGit(d.dir, d.branch)
 	})

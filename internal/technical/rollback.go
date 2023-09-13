@@ -53,6 +53,11 @@ func (t *technical) Rollback(ctx context.Context) error {
 }
 
 func (t *technical) runRollback(ctx context.Context) error {
+	//run when service not exists
+	if !utils.DirectoryExists(t.dir) {
+		return nil
+	}
+
 	logger.Info(fmt.Sprintf("%d", t.percent))
 	if t.percent < 50 {
 		return nil

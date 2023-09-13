@@ -57,6 +57,13 @@ func (t *technical) Update(ctx context.Context) error {
 func (t *technical) runUpdate(ctx context.Context) error {
 	var err error
 
+	//run when service not exists
+	if !utils.DirectoryExists(t.dir) {
+		t.setPercent(100)
+		logger.Info("Service Technical Not Exists")
+		return nil
+	}
+
 	err = t.exec(ctx, 10, "Technical Changed Permission", func() error {
 		return utils.ChangePermision("www-data", t.dir)
 	})

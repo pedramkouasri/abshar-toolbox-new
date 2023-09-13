@@ -128,3 +128,15 @@ func DockerDown(dockerComposeDir string) error {
 
 	return nil
 }
+
+func DirectoryExists(path string) bool {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+		return false
+	}
+
+	return fileInfo.IsDir()
+}
