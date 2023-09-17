@@ -3,6 +3,9 @@ package types
 type PackageService struct {
 	Baadbaan  string `json:"baadbaan"`
 	Technical string `json:"technical"`
+	Discovery string `json:"discovery"`
+	Toolbox   string `json:"toolbox"`
+	Docker    string `json:"docker"`
 }
 
 type Packages struct {

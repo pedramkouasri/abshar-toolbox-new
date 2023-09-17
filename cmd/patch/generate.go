@@ -18,6 +18,7 @@ var PatchCmd = &cobra.Command{
 	},
 }
 
+// update-toolbox patch create ${CI_PROJECT_DIR}/package.json
 var generateCmd = &cobra.Command{
 	Use:                   "create PATH_OF_PACKAGE.JSON",
 	Short:                 "Create PATH_OF_PACKAGE.JSON",

@@ -25,6 +25,30 @@ func GetPackageDiff(pkg []types.Packages) []types.CreatePackageParams {
 		})
 	}
 
+	if hasDiff(package1.Docker, package2.Docker) {
+		diff = append(diff, types.CreatePackageParams{
+			ServiceName: "docker",
+			Tag1:        package1.Docker,
+			Tag2:        package2.Docker,
+		})
+	}
+
+	if hasDiff(package1.Toolbox, package2.Toolbox) {
+		diff = append(diff, types.CreatePackageParams{
+			ServiceName: "toolbox",
+			Tag1:        package1.Toolbox,
+			Tag2:        package2.Toolbox,
+		})
+	}
+
+	if hasDiff(package1.Discovery, package2.Discovery) {
+		diff = append(diff, types.CreatePackageParams{
+			ServiceName: "discovery",
+			Tag1:        package1.Discovery,
+			Tag2:        package2.Discovery,
+		})
+	}
+
 	return diff
 }
 

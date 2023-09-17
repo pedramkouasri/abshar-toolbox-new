@@ -2,6 +2,9 @@ package loading
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"sort"
 	"sync"
 
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/db"
@@ -18,6 +21,7 @@ type process struct {
 	cnt         int
 	percent     int
 	wg          *sync.WaitGroup
+	keys        []string
 }
 
 func NewLoading(packages []string, wg *sync.WaitGroup) *process {
@@ -27,6 +31,9 @@ func NewLoading(packages []string, wg *sync.WaitGroup) *process {
 	process.chanProcess = listeners(process)
 	process.percent = 0
 	process.items = map[string]int{}
+
+	sort.Strings(packages)
+	process.keys = packages
 
 	return process
 }
@@ -60,11 +67,12 @@ func (p *process) Update(service_name string, percent int) {
 }
 
 func (p *process) print() {
-	// cmdy := exec.Command("clear") //Linux example, its tested
-	// cmdy.Stdout = os.Stdout
-	// cmdy.Run()
+	cmdy := exec.Command("clear") //Linux example, its tested
+	cmdy.Stdout = os.Stdout
+	cmdy.Run()
 
-	for serviceName, percent := range p.items {
+	for _, serviceName := range p.keys {
+		percent := p.items[serviceName]
 		fmt.Print(serviceName, ":[")
 		for j := 0; j <= percent; j++ {
 			fmt.Print("=")
@@ -75,6 +83,17 @@ func (p *process) print() {
 		fmt.Print("] %", percent)
 		fmt.Println()
 	}
+	// for serviceName, percent := range p.items {
+	// 	fmt.Print(serviceName, ":[")
+	// 	for j := 0; j <= percent; j++ {
+	// 		fmt.Print("=")
+	// 	}
+	// 	for j := percent + 1; j <= 100; j++ {
+	// 		fmt.Print(" ")
+	// 	}
+	// 	fmt.Print("] %", percent)
+	// 	fmt.Println()
+	// }
 
 }
 

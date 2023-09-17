@@ -149,12 +149,12 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 
 	}
 
-	// err = b.exec(ctx, 80, "Add PhpExcel", func() error {
-	// 	return addPhpExcellToTarFile(b.dir, b.cnf.DockerComposeDir)
-	// })
-	// if err != nil {
-	// 	return fmt.Errorf("Cannot Add PhpExcel: %v", err)
-	// }
+	err = b.exec(ctx, 80, "Add PhpExcel", func() error {
+		return addPhpExcellToTarFile(b.dir, b.cnf.DockerComposeDir)
+	})
+	if err != nil {
+		return fmt.Errorf("Cannot Add PhpExcel: %v", err)
+	}
 
 	err = b.exec(ctx, 90, "Copy Tar File To Temp Directory", func() error {
 		return os.Rename(b.dir+"/patch.tar", b.tempDir+"/patch.tar")
