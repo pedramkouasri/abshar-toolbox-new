@@ -189,5 +189,17 @@ func exportPatch(version string, packagePathFile string, cnf config.Config) erro
 		return err
 	}
 
+	for _, file := range files {
+		if err := os.Remove(file); err != nil {
+			fmt.Println("Error deleting file:", err)
+			return err
+		}
+	}
+
+	if err := os.Remove(tempBuildPath); err != nil {
+		fmt.Println("Error deleting file:", err)
+		return err
+	}
+
 	return nil
 }
