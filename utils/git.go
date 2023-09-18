@@ -135,11 +135,13 @@ func Fetch(dir string) error {
 func GetDiff(dir string, tag1 string, tag2 string, excludePath []string, appendPatch []string, serviceName string) error {
 	cmd := exec.Command("git", "diff", "--name-only", "--diff-filter", "ACMR", tag1, tag2)
 
+	bufE := bytes.NewBuffer([]byte{})
+	cmd.Stderr = bufE
 	cmd.Dir = dir
 
 	res, err := cmd.Output()
 	if err != nil {
-		return err
+		return fmt.Errorf("%v %s", err, bufE.String())
 	}
 
 	if len(excludePath) > 0 {

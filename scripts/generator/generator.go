@@ -46,7 +46,7 @@ func (us patchService) Handle(packagePathFile string) error {
 		return fmt.Errorf("Can not Decode package.json %v", err)
 	}
 
-	version := pkg[len(pkg)-1].Version
+	version := fmt.Sprintf("%s-to-%s", pkg[len(pkg)-2].Version, pkg[len(pkg)-1].Version)
 
 	diffPackages := utils.GetPackageDiff(pkg)
 	if len(diffPackages) == 0 {
