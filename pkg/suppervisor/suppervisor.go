@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-func reloadConfig() error {
+func ReloadConfig() error {
 	command := []string{"supervisorctl", "update"}
 
 	cmd := exec.Command(command[0], command[1:]...)
@@ -20,7 +20,7 @@ func reloadConfig() error {
 }
 
 func RestartAllService() error {
-	if err := reloadConfig(); err != nil {
+	if err := ReloadConfig(); err != nil {
 		return fmt.Errorf("cannot reload config %v", err)
 	}
 

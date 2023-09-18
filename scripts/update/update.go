@@ -13,6 +13,7 @@ import (
 	"github.com/pedramkousari/abshar-toolbox-new/internal/toolbox"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/loading"
 	"github.com/pedramkousari/abshar-toolbox-new/types"
+	"github.com/pedramkousari/abshar-toolbox-new/utils"
 )
 
 type updateService struct {
@@ -38,6 +39,9 @@ func (us updateService) Handle(diffPackages []types.CreatePackageParams) error {
 		services = append(services, dp.ServiceName)
 	}
 	loading := loading.NewLoading(services, wg)
+
+	updateDockerCh := make(chan bool)
+	updateToolboxCh := make(chan bool)
 
 	for _, pac := range diffPackages {
 		if pac.ServiceName == "baadbaan" {
@@ -69,10 +73,14 @@ func (us updateService) Handle(diffPackages []types.CreatePackageParams) error {
 
 			wg.Add(1)
 			go func() {
-				defer wg.Done()
+
 				if err := ds.Update(ctx); err != nil {
 					hasError <- err
+					wg.Done()
+					return
 				}
+				wg.Done()
+				updateDockerCh <- true
 			}()
 		}
 
@@ -81,10 +89,13 @@ func (us updateService) Handle(diffPackages []types.CreatePackageParams) error {
 
 			wg.Add(1)
 			go func() {
-				defer wg.Done()
 				if err := tos.Update(ctx); err != nil {
 					hasError <- err
+					wg.Done()
+					return
 				}
+				wg.Done()
+				updateToolboxCh <- true
 			}()
 		}
 
@@ -103,6 +114,19 @@ func (us updateService) Handle(diffPackages []types.CreatePackageParams) error {
 
 	go func() {
 		wg.Wait()
+
+		res, ok := <-updateDockerCh
+		if ok && res {
+			if err := utils.DockerDown(us.cnf.DockerComposeDir); err != nil {
+				hasError <- err
+			}
+		}
+
+		res, ok = <-updateToolboxCh
+		if ok && res {
+			//implement
+		}
+
 		close(hasError)
 	}()
 

@@ -62,19 +62,19 @@ func (t *toolbox) runUpdate(ctx context.Context) error {
 		return fmt.Errorf("Backup File With GIt Failed Error Is: %s", err)
 	}
 
-	err = t.exec(ctx, 70, "Toolbox Extracted Tar File", func() error {
+	err = t.exec(ctx, 100, "Toolbox Extracted Tar File", func() error {
 		return utils.ExtractTarFile(t.serviceName, t.dir)
 	})
 	if err != nil {
 		return fmt.Errorf("Extract Tar File Failed Error Is: %s", err)
 	}
 
-	err = t.exec(ctx, 100, "Toolbox Down All Service", func() error {
-		return utils.DockerDown(t.cnf.DockerComposeDir)
-	})
-	if err != nil {
-		return fmt.Errorf("Cannot Toolbox Down All Service : %s", err)
-	}
+	// err = t.exec(ctx, 100, "Toolbox Down All Service", func() error {
+	// 	return utils.DockerDown(t.cnf.DockerComposeDir)
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Cannot Toolbox Down All Service : %s", err)
+	// }
 
 	return nil
 }

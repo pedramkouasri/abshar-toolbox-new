@@ -26,7 +26,7 @@ type ResponseServer struct {
 
 func HandleFunc(cnf config.Config, server *Server) {
 	server.HandleFunc("/ping", pingHandle)
-	server.HandleFunc("/patch", patchHandle(cnf))
+	server.HandleFunc("/patch", patchHandle(cnf, server))
 	server.HandleFunc("/state", stateHandle)
 
 	server.HandleFunc("/stop", stopHandle(server))
@@ -42,7 +42,7 @@ func pingHandle(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
 }
 
-func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request) {
+func patchHandle(cnf config.Config, server *Server) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer w.Header().Set("Content-Type", "application/json")
@@ -85,6 +85,7 @@ func patchHandle(cnf config.Config) func(w http.ResponseWriter, r *http.Request)
 			if err == nil {
 				logger.Info("Completed Update")
 				db.StoreSuccess()
+				server.Stop()
 				return
 			}
 

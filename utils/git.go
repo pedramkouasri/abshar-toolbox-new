@@ -16,6 +16,7 @@ func BackupFileWithGit(dir string, branch string) error {
 	cmd := exec.Command("git", "diff", "--name-only")
 	cmd.Dir = dir
 	cmd.Stdout = stdOut
+	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
 	if err != nil {
