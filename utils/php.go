@@ -11,7 +11,7 @@ import (
 
 func ComposerDumpAutoload(containerName string) error {
 
-	err := os.Setenv("HOME", "/tmp")
+	err := os.Setenv("HOME", "/root")
 	if err != nil {
 		return fmt.Errorf("Error setting environment variable : %v", err)
 	}

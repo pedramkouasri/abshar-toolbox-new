@@ -24,6 +24,9 @@ func BackupFileWithGit(dir string, branch string) error {
 	}
 
 	if stdOut.Len() > 0 {
+		// if err := AddSafeDirectory(dir); err != nil {
+		// 	return fmt.Errorf("Cannot git Safe Direectory :%v", err)
+		// }
 		if err := createBranch(dir, branch); err != nil {
 			return fmt.Errorf("Create Branch Failed Error is : %v\n", err)
 		}
@@ -55,15 +58,19 @@ func createBranch(dir string, branch string) error {
 func gitAdd(dir string) error {
 	cmd := exec.Command("git", "add", ".")
 	cmd.Dir = dir
+
+	bufE := bytes.NewBuffer([]byte{})
+	cmd.Stderr = bufE
+
 	if _, err := cmd.Output(); err != nil {
-		return err
+		return fmt.Errorf("%v %s", err, bufE.String())
 	}
 	return nil
 }
 
 func gitCommit(dir string, branch string) error {
 
-	err := os.Setenv("HOME", "/tmp")
+	err := os.Setenv("HOME", "/root")
 	if err != nil {
 		return fmt.Errorf("Error setting environment variable: %v", err)
 	}
