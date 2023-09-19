@@ -99,14 +99,21 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 		return fmt.Errorf("Cannot Fetch: %v", err)
 	}
 
-	err = b.exec(ctx, 20, "Get Diff Code", func() error {
+	err = b.exec(ctx, 20, "Switched Branch", func() error {
+		return utils.SwitchBranch(b.dir, b.tag2)
+	})
+	if err != nil {
+		return fmt.Errorf("Cannot Switch Branch: %v", err)
+	}
+
+	err = b.exec(ctx, 30, "Get Diff Code", func() error {
 		return utils.GetDiff(b.dir, b.tag1, b.tag2, excludePath, appendPath, b.serviceName)
 	})
 	if err != nil {
 		return fmt.Errorf("Cannot Get Diff: %v", err)
 	}
 
-	err = b.exec(ctx, 30, "Create Tar File", func() error {
+	err = b.exec(ctx, 40, "Create Tar File", func() error {
 		return utils.CreateTarFile(b.dir, b.tempDir)
 	})
 	if err != nil {
@@ -114,13 +121,6 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 	}
 
 	if utils.ComposerChangedOrPanic(b.tempDir) {
-
-		err = b.exec(ctx, 50, "Switched Branch", func() error {
-			return utils.SwitchBranch(b.dir, b.tag2)
-		})
-		if err != nil {
-			return fmt.Errorf("Cannot Switch Branch: %v", err)
-		}
 
 		// if err := utils.AddSafeDirectory(b.dir, b.containerName); err != nil {
 		// 	return fmt.Errorf("Cannot Add Safe Directory: %v", err)

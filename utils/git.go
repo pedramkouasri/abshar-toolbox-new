@@ -42,10 +42,12 @@ func createBranch(dir string, branch string) error {
 	cmd := exec.Command("git", strings.Fields(fmt.Sprintf("checkout -b %s", branch))...)
 
 	cmd.Stdout = nil
+	bufE := bytes.NewBuffer([]byte{})
+	cmd.Stderr = bufE
 
 	cmd.Dir = dir
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("%v %s", err, bufE.String())
 	}
 	return nil
 }
@@ -95,9 +97,9 @@ func gitCommit(dir string, branch string) error {
 }
 
 func RestoreCode(dir string) error {
-	if err := AddSafeDirectory(dir); err != nil {
-		return fmt.Errorf("Cannot git Safe Direectory :%v", err)
-	}
+	// if err := AddSafeDirectory(dir); err != nil {
+	// 	return fmt.Errorf("Cannot git Safe Direectory :%v", err)
+	// }
 
 	cmd := exec.Command("git", "reset", "--hard")
 	cmd.Dir = dir

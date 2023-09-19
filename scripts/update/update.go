@@ -40,6 +40,8 @@ func (us updateService) Handle(diffPackages []types.CreatePackageParams) error {
 	}
 	loading := loading.NewLoading(services, wg)
 
+	var hasServiceDocker bool
+	var hasServiceToolbox bool
 	updateDockerCh := make(chan bool)
 	updateToolboxCh := make(chan bool)
 
@@ -69,6 +71,7 @@ func (us updateService) Handle(diffPackages []types.CreatePackageParams) error {
 		}
 
 		if pac.ServiceName == "docker" {
+			hasServiceDocker = true
 			ds := docker.NewUpdate(us.cnf, pac.Tag2, loading)
 
 			wg.Add(1)
@@ -85,6 +88,7 @@ func (us updateService) Handle(diffPackages []types.CreatePackageParams) error {
 		}
 
 		if pac.ServiceName == "toolbox" {
+			hasServiceToolbox = true
 			tos := toolbox.NewUpdate(us.cnf, pac.Tag2, loading)
 
 			wg.Add(1)
@@ -115,16 +119,20 @@ func (us updateService) Handle(diffPackages []types.CreatePackageParams) error {
 	go func() {
 		wg.Wait()
 
-		res, ok := <-updateDockerCh
-		if ok && res {
-			if err := utils.DockerDown(us.cnf.DockerComposeDir); err != nil {
-				hasError <- err
+		if hasServiceDocker {
+			res, ok := <-updateDockerCh
+			if ok && res {
+				if err := utils.DockerDown(us.cnf.DockerComposeDir); err != nil {
+					hasError <- err
+				}
 			}
 		}
 
-		res, ok = <-updateToolboxCh
-		if ok && res {
-			//implement
+		if hasServiceToolbox {
+			res, ok := <-updateToolboxCh
+			if ok && res {
+				//implement
+			}
 		}
 
 		close(hasError)

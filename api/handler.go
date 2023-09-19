@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/db"
@@ -85,7 +86,11 @@ func patchHandle(cnf config.Config, server *Server) func(w http.ResponseWriter, 
 			if err == nil {
 				logger.Info("Completed Update")
 				db.StoreSuccess()
-				server.Stop()
+
+				go func() {
+					time.Sleep(time.Second * 30)
+					server.Stop()
+				}()
 				return
 			}
 

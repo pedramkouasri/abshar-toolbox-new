@@ -68,7 +68,7 @@ func (b *baadbaan) runUpdate(ctx context.Context) error {
 		return utils.BackupFileWithGit(b.dir, b.branch)
 	})
 	if err != nil {
-		return fmt.Errorf("Backup File With GIt Failed Error Is: %s", err)
+		return fmt.Errorf("Baadbaan Backup File With GIt Failed Error Is: %s", err)
 	}
 
 	err = b.exec(ctx, 40, "Baadbaan Backup Database Complete", func() error {
