@@ -89,7 +89,7 @@ func patchHandle(cnf config.Config, server *Server) func(w http.ResponseWriter, 
 				db.StoreSuccess()
 
 				go func() {
-					time.Sleep(time.Second * 5)
+					time.Sleep(time.Second * 12)
 					server.Stop()
 				}()
 				return
