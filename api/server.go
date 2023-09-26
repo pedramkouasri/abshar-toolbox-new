@@ -16,7 +16,7 @@ type Server struct {
 
 const (
 	httpAPITimeout = time.Second * 60
-	shutdwnTimeout = time.Second * 30
+	shutdwnTimeout = time.Second * 5
 )
 
 func NewServer(add string, port int) *Server {
