@@ -75,6 +75,7 @@ func patchHandle(cnf config.Config, server *Server) func(w http.ResponseWriter, 
 		go func() {
 			diffPackages, err := Start(fileSrc, cnf)
 			if err != nil {
+				db.StoreError(err)
 				logger.Error(fmt.Errorf("Start Failed %v", err))
 				return
 			}
@@ -88,7 +89,7 @@ func patchHandle(cnf config.Config, server *Server) func(w http.ResponseWriter, 
 				db.StoreSuccess()
 
 				go func() {
-					time.Sleep(time.Second * 30)
+					time.Sleep(time.Second * 10)
 					server.Stop()
 				}()
 				return

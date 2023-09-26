@@ -94,6 +94,13 @@ func (d *docker) runGenerate(ctx context.Context) error {
 		return fmt.Errorf("Cannot Fetch: %v", err)
 	}
 
+	err = d.exec(ctx, 25, "Switched Branch", func() error {
+		return utils.SwitchBranch(d.dir, d.tag2)
+	})
+	if err != nil {
+		return fmt.Errorf("Cannot Switch Branch: %v", err)
+	}
+
 	err = d.exec(ctx, 20, "Get Diff Code", func() error {
 		return utils.GetDiff(d.dir, d.tag1, d.tag2, excludePath, appendPath, d.serviceName)
 	})

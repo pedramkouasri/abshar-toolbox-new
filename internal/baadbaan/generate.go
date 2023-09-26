@@ -122,10 +122,6 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 
 	if utils.ComposerChangedOrPanic(b.tempDir) {
 
-		// if err := utils.AddSafeDirectory(b.dir, b.containerName); err != nil {
-		// 	return fmt.Errorf("Cannot Add Safe Directory: %v", err)
-		// }
-
 		err = b.exec(ctx, 60, "Composer Installed", func() error {
 			return utils.ComposerInstall(b.containerName)
 		})

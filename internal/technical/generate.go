@@ -96,14 +96,21 @@ func (t *technical) runGenerate(ctx context.Context) error {
 		return fmt.Errorf("Cannot Fetch: %v", err)
 	}
 
-	err = t.exec(ctx, 20, "Get Diff Code", func() error {
+	err = t.exec(ctx, 20, "Switched Branch", func() error {
+		return utils.SwitchBranch(t.dir, t.tag2)
+	})
+	if err != nil {
+		return fmt.Errorf("Cannot Switch Branch: %v", err)
+	}
+
+	err = t.exec(ctx, 30, "Get Diff Code", func() error {
 		return utils.GetDiff(t.dir, t.tag1, t.tag2, excludePath, appendPath, t.serviceName)
 	})
 	if err != nil {
 		return fmt.Errorf("Cannot Get Diff: %v", err)
 	}
 
-	err = t.exec(ctx, 30, "Create Tar File", func() error {
+	err = t.exec(ctx, 40, "Create Tar File", func() error {
 		return utils.CreateTarFile(t.dir, t.tempDir)
 	})
 	if err != nil {
@@ -111,17 +118,6 @@ func (t *technical) runGenerate(ctx context.Context) error {
 	}
 
 	if utils.ComposerChangedOrPanic(t.tempDir) {
-
-		err = t.exec(ctx, 50, "Switched Branch", func() error {
-			return utils.SwitchBranch(t.dir, t.tag2)
-		})
-		if err != nil {
-			return fmt.Errorf("Cannot Switch Branch: %v", err)
-		}
-
-		// if err := utils.AddSafeDirectory(t.dir, t.containerName); err != nil {
-		// 	return fmt.Errorf("Cannot Add Safe Directory: %v", err)
-		// }
 
 		err = t.exec(ctx, 60, "Composer Installed", func() error {
 			return utils.ComposerInstall(t.containerName)

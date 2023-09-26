@@ -92,6 +92,13 @@ func (t *toolbox) runGenerate(ctx context.Context) error {
 		return fmt.Errorf("Cannot Fetch: %v", err)
 	}
 
+	err = t.exec(ctx, 25, "Switched Branch", func() error {
+		return utils.SwitchBranch(t.dir, t.tag2)
+	})
+	if err != nil {
+		return fmt.Errorf("Cannot Switch Branch: %v", err)
+	}
+
 	err = t.exec(ctx, 20, "Get Diff Code", func() error {
 		return utils.GetDiff(t.dir, t.tag1, t.tag2, excludePath, appendPath, t.serviceName)
 	})
