@@ -40,7 +40,7 @@ func BackupDatabase(fileName string, dockerComposeDir string, cnf *ConfigService
 	datbase, _ := cnf.Get("DB_DATABASE")
 	username, _ := cnf.Get("DB_USERNAME")
 	password, _ := cnf.Get("DB_PASSWORD")
-	sqlCommand := fmt.Sprintf(sqlDumpCommand, username, password, host, port, datbase)
+	sqlCommand := fmt.Sprintf(sqlDumpCommand, strings.TrimSpace(username), strings.TrimSpace(password), strings.TrimSpace(host), strings.TrimSpace(port), strings.TrimSpace(datbase))
 
 	var command []string
 	command = strings.Fields(fmt.Sprintf(`docker compose -f %s/docker-compose.yaml run --rm baadbaan_db %s`, dockerComposeDir, sqlCommand))
