@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -48,11 +49,13 @@ func BackupDatabase(fileName string, dockerComposeDir string, cnf *ConfigService
 	cmd := exec.Command(command[0], command[1:]...)
 
 	cmd.Stdout = file
-	cmd.Stderr = os.Stderr
+
+	bufE := bytes.NewBuffer([]byte{})
+	cmd.Stderr = bufE
 
 	err = cmd.Run()
 	if err != nil {
-		return fmt.Errorf("Dump sql Failed error is: %v", err)
+		return fmt.Errorf("Dump sql Failed error is: %v %s", err, bufE.String())
 	}
 
 	return nil

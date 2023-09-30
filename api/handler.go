@@ -11,6 +11,7 @@ import (
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/db"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
+	"github.com/pedramkousari/abshar-toolbox-new/scripts/backup"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/rollback"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/update"
 	"github.com/pedramkousari/abshar-toolbox-new/types"
@@ -29,6 +30,12 @@ func HandleFunc(cnf config.Config, server *Server) {
 	server.HandleFunc("/ping", pingHandle)
 	server.HandleFunc("/patch", patchHandle(cnf, server))
 	server.HandleFunc("/state", stateHandle)
+
+	server.HandleFunc("/backup", backupHandle(cnf, server))
+	// server.HandleFunc("/state-backup", stateHandle)
+
+	// server.HandleFunc("/restore", restoreHandle(cnf, server))
+	// server.HandleFunc("/state-restore", stateHandle)
 
 	server.HandleFunc("/stop", stopHandle(server))
 }
@@ -230,4 +237,40 @@ func Start(fileSrc string, cnf config.Config) ([]types.CreatePackageParams, erro
 	}
 
 	return diffPackages, nil
+}
+
+func backupHandle(cnf config.Config, server *Server) func(w http.ResponseWriter, r *http.Request) {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer w.Header().Set("Content-Type", "application/json")
+
+		branchName := time.Now().Format("2006-01-02-15-04-05")
+
+		logger.Info("Backup Started")
+
+		// go func() {
+
+		logger.Info("Run Go Routine Update")
+		bk := backup.NewBackupService(cnf)
+
+		err := bk.Handle(branchName)
+		if err != nil {
+			logger.Error(fmt.Errorf("Backup Failed %v", err))
+
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{
+				"message": "Backup Failed"
+			}`))
+
+			return
+		}
+
+		// }()
+		logger.Info("Completed Backup")
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{
+			"message": "Backup Completed"
+		}`))
+	}
 }

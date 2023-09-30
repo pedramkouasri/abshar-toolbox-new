@@ -27,13 +27,13 @@ func BackupFileWithGit(dir string, branch string) error {
 		// if err := AddSafeDirectory(dir); err != nil {
 		// 	return fmt.Errorf("Cannot git Safe Direectory :%v", err)
 		// }
-		if err := createBranch(dir, branch); err != nil {
+		if err := CreateBranch(dir, branch); err != nil {
 			return fmt.Errorf("Create Branch Failed Error is : %v\n", err)
 		}
-		if err := gitAdd(dir); err != nil {
+		if err := GitAdd(dir); err != nil {
 			return fmt.Errorf("Git Add Failed Error is : %v\n", err)
 		}
-		if err := gitCommit(dir, branch); err != nil {
+		if err := GitCommit(dir, branch); err != nil {
 			return fmt.Errorf("Git Commit Failed Error is : %v\n", err)
 		}
 	}
@@ -41,7 +41,7 @@ func BackupFileWithGit(dir string, branch string) error {
 	return nil
 }
 
-func createBranch(dir string, branch string) error {
+func CreateBranch(dir string, branch string) error {
 	cmd := exec.Command("git", strings.Fields(fmt.Sprintf("checkout -b %s", branch))...)
 
 	cmd.Stdout = nil
@@ -55,7 +55,7 @@ func createBranch(dir string, branch string) error {
 	return nil
 }
 
-func gitAdd(dir string) error {
+func GitAdd(dir string) error {
 	cmd := exec.Command("git", "add", ".")
 	cmd.Dir = dir
 
@@ -68,32 +68,32 @@ func gitAdd(dir string) error {
 	return nil
 }
 
-func gitCommit(dir string, branch string) error {
+func GitCommit(dir string, branch string) error {
 
 	err := os.Setenv("HOME", "/root")
 	if err != nil {
 		return fmt.Errorf("Error setting environment variable: %v", err)
 	}
 
-	cmd := exec.Command("git", "config", "--global", "user.email", "persianped@gmail.com")
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("Git set config Email Failed Error Is: %v", err)
-	}
+	// cmd := exec.Command("git", "config", "--global", "user.email", "persianped@gmail.com")
+	// cmd.Stderr = os.Stderr
+	// if err := cmd.Run(); err != nil {
+	// 	return fmt.Errorf("Git set config Email Failed Error Is: %v", err)
+	// }
 
-	cmd = exec.Command("git", "config", "--global", "user.name", "pedram kousari")
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("Git set config UserName Failed Error Is: %v", err)
-	}
+	// cmd = exec.Command("git", "config", "--global", "user.name", "pedram kousari")
+	// cmd.Stderr = os.Stderr
+	// if err := cmd.Run(); err != nil {
+	// 	return fmt.Errorf("Git set config UserName Failed Error Is: %v", err)
+	// }
 
-	cmd = exec.Command("git", "config", "--global", "--add", "safe.directory", dir)
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("Git Set Safe Directory Failed Error Is: %v", err)
-	}
+	// cmd = exec.Command("git", "config", "--global", "--add", "safe.directory", dir)
+	// cmd.Stderr = os.Stderr
+	// if err := cmd.Run(); err != nil {
+	// 	return fmt.Errorf("Git Set Safe Directory Failed Error Is: %v", err)
+	// }
 
-	cmd = exec.Command("git", "commit", "-m", fmt.Sprintf("backup befor update patch %s time: %d", branch, time.Now().Unix()))
+	cmd := exec.Command("git", "commit", "-m", fmt.Sprintf("backup befor update patch %s time: %d", branch, time.Now().Unix()))
 	cmd.Stderr = os.Stderr
 	cmd.Dir = dir
 	if err := cmd.Run(); err != nil {

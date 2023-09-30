@@ -5,10 +5,16 @@ build-server: build
 	scp bin/update-toolbox root@10.10.10.217:/var/www/abshar/bin
 
 build-229: build
-	scp bin/update-toolbox root@10.10.10.229:/var/www/html/baadbaan-docker/services/update-toolbox	
+	scp bin/update-toolbox root@10.10.10.229:/var/www/html/baadbaan-docker/services/update-toolbox
 
 build-210: build
-	scp bin/update-toolbox root@10.10.10.210:/var/www/html/baadbaan-docker/services/update-toolbox	
+	scp bin/update-toolbox root@10.10.10.210:/var/www/html/baadbaan-docker/services/update-toolbox
+
+build-205: build
+	systemctl stop supervisor.service
+	cp bin/update-toolbox /var/www/html/baadbaan-docker/services/update-toolbox
+	systemctl start supervisor.service
+	sleep 2 && curl localhost:9990/ping
 
 run: build
 	bin/update-toolbox

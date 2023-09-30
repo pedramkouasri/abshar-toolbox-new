@@ -1,0 +1,7 @@
+@host=http://localhost:9990
+
+GET {{host}}/ping
+
+
+###Get Backup
+GET {{host}}/backup
