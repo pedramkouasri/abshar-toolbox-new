@@ -109,6 +109,14 @@ func AddDiffPackageToTarFile(dir string, tempDir string) error {
 		}
 		return nil
 	}
+
+	cmd := exec.Command("tar", "-rf", "./patch.tar", "vendor/composer/installed.json")
+	cmd.Dir = dir
+	_, err = cmd.Output()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
