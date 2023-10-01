@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/contracts"
@@ -72,37 +71,8 @@ func (d *discovery) runBackup(ctx context.Context) error {
 		return fmt.Errorf("Discovery Commit Failed Error is: %s", err)
 	}
 
-	pwd, _ := os.Getwd()
-	err = d.exec(ctx, 90, "Create Tar File", func() error {
-		outputFile := pwd + "/temp/builds/" + d.serviceName + ".tar"
-
-		tarCommands := []string{
-			"nice",
-			"--10",
-			"tar",
-			"-cf",
-			outputFile,
-		}
-
-		cmd := exec.Command("sh", "-c", strings.Join(tarCommands, " "))
-		cmd.Dir = d.dir
-
-		if _, err := cmd.Output(); err != nil {
-			if err.Error() != "exit status 2" {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("Cannot Create Tar File: %v", err)
-	}
-
 	err = d.exec(ctx, 100, "Discovery Gzip Complete", func() error {
-		logger.Info(strings.Join([]string{"gzip", "-f", fmt.Sprintf("%s/%s.tar", pwd+"/temp/builds", d.serviceName)}, " "))
-		cmd := exec.Command("gzip", "-f", fmt.Sprintf("%s/%s.tar", pwd+"/temp/builds", d.serviceName))
-		cmd.Stderr = os.Stderr
-		_, err := cmd.Output()
+		_, err := os.Create(fmt.Sprintf("./temp/builds/%s.tar.gz", d.serviceName))
 		return err
 	})
 	if err != nil {
