@@ -19,7 +19,7 @@ func NewRestore(cnf config.Config, branch string, loading contracts.Loader) *tec
 		dir:         path.Join(cnf.DockerComposeDir, "services/technical-risk-micro-service"),
 		branch:      branch,
 		serviceName: "technical",
-		env:         utils.LoadEnv(path.Join(cnf.DockerComposeDir, "technical_new")),
+		env:         utils.LoadEnv(path.Join(cnf.DockerComposeDir, "services/technical-risk-micro-service")),
 		percent:     0,
 		loading:     loading,
 		cnf:         cnf,
