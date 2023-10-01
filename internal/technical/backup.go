@@ -1,4 +1,4 @@
-package baadbaan
+package technical
 
 import (
 	"bytes"
@@ -15,25 +15,24 @@ import (
 	"github.com/pedramkousari/abshar-toolbox-new/utils"
 )
 
-func NewBackup(cnf config.Config, branch string, loading contracts.Loader) *baadbaan {
-	return &baadbaan{
-		tempDir:     cnf.TempDir + "/baadbaan",
-		dir:         path.Join(cnf.DockerComposeDir, "baadbaan_new"),
+func NewBackup(cnf config.Config, branch string, loading contracts.Loader) *technical {
+	return &technical{
+		dir:         path.Join(cnf.DockerComposeDir, "services/technical-risk-micro-service"),
 		branch:      branch,
-		serviceName: "baadbaan",
-		env:         utils.LoadEnv(path.Join(cnf.DockerComposeDir, "baadbaan_new")),
+		serviceName: "technical",
+		env:         utils.LoadEnv(path.Join(cnf.DockerComposeDir, "services/technical-risk-micro-service")),
 		percent:     0,
 		loading:     loading,
 		cnf:         cnf,
 	}
 }
 
-func (b *baadbaan) Backup(ctx context.Context) error {
+func (t *technical) Backup(ctx context.Context) error {
 
 	completeSignal := make(chan error)
 	go func() {
 		defer close(completeSignal)
-		if err := b.runBackup(ctx); err != nil {
+		if err := t.runBackup(ctx); err != nil {
 			completeSignal <- err
 		}
 	}()
@@ -41,64 +40,60 @@ func (b *baadbaan) Backup(ctx context.Context) error {
 	select {
 	case err, ok := <-completeSignal:
 		if !ok {
-			logger.Info(fmt.Sprintf("Service Backup %s Completed", b.serviceName))
+			logger.Info(fmt.Sprintf("Service Backup %s Completed", t.serviceName))
 			return nil
 		}
 
 		if err != nil {
-			return fmt.Errorf("Service Backup Package %s is failed: %v", b.serviceName, err)
+			return fmt.Errorf("Service Backup Package %s is failed: %v", t.serviceName, err)
 		}
 
 		return nil
 
 	case <-ctx.Done():
-		logger.Info(fmt.Sprintf("%s Canceled", b.serviceName))
+		logger.Info(fmt.Sprintf("%s Canceled", t.serviceName))
 		return ctx.Err()
 	}
 }
 
-func (b *baadbaan) runBackup(ctx context.Context) error {
+func (t *technical) runBackup(ctx context.Context) error {
 	var err error
 
-	err = b.exec(ctx, 10, "Baadbaan Create Branch", func() error {
-		return utils.CreateBranch(b.dir, b.branch)
+	err = t.exec(ctx, 10, "Technical Create Branch", func() error {
+		return utils.CreateBranch(t.dir, t.branch)
 	})
 	if err != nil {
-		return fmt.Errorf("Baadbaan Create Branch Failed Error is: %s", err)
+		return fmt.Errorf("Technical Create Branch Failed Error is: %s", err)
 	}
 
-	err = b.exec(ctx, 30, "Baadbaan Commit files", func() error {
-		return b.commitIfChanges(ctx)
+	err = t.exec(ctx, 30, "Technical Commit files", func() error {
+		return t.commitIfChanges(ctx)
 	})
 	if err != nil {
-		return fmt.Errorf("Baadbaan Commit Failed Error is: %s", err)
+		return fmt.Errorf("Technical Commit Failed Error is: %s", err)
 	}
 
-	err = b.exec(ctx, 40, "Baadbaan Backup Database Complete", func() error {
-		return utils.BackupDatabase(b.serviceName, b.cnf.DockerComposeDir, b.env)
+	err = t.exec(ctx, 40, "Technical Backup Database Complete", func() error {
+		return utils.BackupDatabase(t.serviceName, t.cnf.DockerComposeDir, t.env)
 	})
 	if err != nil {
 		return fmt.Errorf("Backup Database Failed Error Is: %s", err)
 	}
 
 	pwd, _ := os.Getwd()
-	err = b.exec(ctx, 90, "Create Tar File", func() error {
+	err = t.exec(ctx, 90, "Create Tar File", func() error {
 		backupSqlDir := pwd + "/backupSql"
 
-		dbPath := backupSqlDir + "/" + b.serviceName + ".sql"
+		dbPath := backupSqlDir + "/" + t.serviceName + ".sql"
 
 		pathes := []string{
 			"storage/app",
 			dbPath,
 		}
 
-		outputFile := pwd + "/temp/builds/" + b.serviceName + ".tar"
+		outputFile := pwd + "/temp/builds/" + t.serviceName + ".tar"
 
-		excludes := []string{
-			"**/patches",
-			"**/versions",
-			"**/backup",
-		}
+		excludes := []string{}
 
 		tarCommands := []string{
 			"nice",
@@ -120,7 +115,7 @@ func (b *baadbaan) runBackup(ctx context.Context) error {
 
 		// cmd := exec.Command(tarCommands[0], tarCommands[1:]...)
 		cmd := exec.Command("sh", "-c", strings.Join(tarCommands, " "))
-		cmd.Dir = b.dir
+		cmd.Dir = t.dir
 
 		if _, err := cmd.Output(); err != nil {
 			if err.Error() != "exit status 2" {
@@ -133,26 +128,26 @@ func (b *baadbaan) runBackup(ctx context.Context) error {
 		return fmt.Errorf("Cannot Create Tar File: %v", err)
 	}
 
-	err = b.exec(ctx, 100, "Baadbaan Gzip Complete", func() error {
-		logger.Info(strings.Join([]string{"gzip", "-f", fmt.Sprintf("%s/%s.tar", pwd+"/temp/builds", b.serviceName)}, " "))
-		cmd := exec.Command("gzip", "-f", fmt.Sprintf("%s/%s.tar", pwd+"/temp/builds", b.serviceName))
+	err = t.exec(ctx, 100, "Technical Gzip Complete", func() error {
+		logger.Info(strings.Join([]string{"gzip", "-f", fmt.Sprintf("%s/%s.tar", pwd+"/temp/builds", t.serviceName)}, " "))
+		cmd := exec.Command("gzip", "-f", fmt.Sprintf("%s/%s.tar", pwd+"/temp/builds", t.serviceName))
 		cmd.Stderr = os.Stderr
 		_, err := cmd.Output()
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("Baadbaan Gzip Failed Error Is: %s", err)
+		return fmt.Errorf("Technical Gzip Failed Error Is: %s", err)
 	}
 
 	return nil
 }
 
-func (b *baadbaan) commitIfChanges(ctx context.Context) error {
+func (t *technical) commitIfChanges(ctx context.Context) error {
 	var output []byte
 	stdOut := bytes.NewBuffer(output)
 
 	cmd := exec.Command("git", "diff", "--name-only")
-	cmd.Dir = b.dir
+	cmd.Dir = t.dir
 	cmd.Stdout = stdOut
 	cmd.Stderr = os.Stderr
 
@@ -163,12 +158,12 @@ func (b *baadbaan) commitIfChanges(ctx context.Context) error {
 
 	if stdOut.Len() > 0 {
 
-		if err := utils.GitAdd(b.dir); err != nil {
+		if err := utils.GitAdd(t.dir); err != nil {
 			return fmt.Errorf("Git Add Failed Error is: %s", err)
 		}
 
-		cmd := exec.Command("git", "commit", "-m", fmt.Sprintf("backup %s", b.branch))
-		cmd.Dir = b.dir
+		cmd := exec.Command("git", "commit", "-m", fmt.Sprintf("backup %s", t.branch))
+		cmd.Dir = t.dir
 
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {

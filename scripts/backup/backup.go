@@ -27,7 +27,16 @@ func (us backupService) Handle(branchName string) error {
 	defer cancel()
 
 	wg := new(sync.WaitGroup)
+
 	services := []string{"baadbaan"}
+	if utils.DirectoryExists(us.cnf.DockerComposeDir + "/services/technical-risk-micro-service") {
+		services = append(services, "technical")
+	}
+
+	if utils.DirectoryExists(us.cnf.DockerComposeDir + "/services/asset-discovery") {
+		services = append(services, "discovery")
+	}
+
 	loading := loading.NewLoading(services, wg)
 	hasError := make(chan error)
 
