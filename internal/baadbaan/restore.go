@@ -60,7 +60,7 @@ func (b *baadbaan) runRestore(ctx context.Context) error {
 	var err error
 
 	err = b.exec(ctx, 10, "Clean Storage", func() error {
-		commands := []string{"find", "storage/app/", "-type", "f", "-links", "2", "-exec", "rm", "-f", "{}", ";"}
+		commands := []string{"sh", "-c", `find storage/app/ -type f -links 2 -exec rm -f {} +`}
 		cmd := exec.Command(commands[0], commands[1:]...)
 		cmd.Dir = b.dir
 		bufE := bytes.NewBuffer([]byte{})
@@ -69,20 +69,20 @@ func (b *baadbaan) runRestore(ctx context.Context) error {
 			return fmt.Errorf("Cannot Remove File In Storage :%v err: %s out: %s", err, bufE.String(), out)
 		}
 
-		commands = []string{"find", "storage/app/", "-type", "d", "!", "-name", "'patches'", "!", "-name", "'versions'", "!", "-name", "'backup'", "-exec", "rm", "-rf", "{}", ";"}
+		commands = []string{"sh", "-c", "find storage/app/ -type d ! -name 'app' ! -name 'patches' ! -name 'versions' ! -name 'backup' -exec rm -rf {} +"}
 
-		// cmd = exec.Command(commands[0], commands[1:]...)
-		// cmd.Dir = b.dir
-		// cmd.Stderr = bufE
-		// if out, err := cmd.Output(); err != nil {
-		// 	return fmt.Errorf("Cannot Remove Folder In Storage :%v err: %s out: %s", err, bufE.String(), out)
-		// }
+		cmd = exec.Command(commands[0], commands[1:]...)
+		cmd.Dir = b.dir
+		cmd.Stderr = bufE
+		out, err := cmd.Output()
+		if err != nil {
+			return fmt.Errorf("Cannot Remove Folder In Storage :%v err: %s out: %s", err, bufE.String(), out)
+		}
 		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("Baadbaan Clean Storage Failed Error is: %s", err)
 	}
-	return nil
 
 	err = b.exec(ctx, 40, "Baadbaan Extracted Tar File", func() error {
 		return utils.ExtractTarFile(b.serviceName, b.dir)

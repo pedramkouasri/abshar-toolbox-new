@@ -6,8 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
 )
 
 var backupSqlDir string
@@ -84,8 +82,6 @@ func RestoreDatabase(fileName string, dockerComposeDir string, cnf *ConfigServic
 
 	var command []string
 	command = strings.Fields(fmt.Sprintf("docker compose -f %s/docker-compose.yaml run --rm -exec -T baadbaan_db %s", dockerComposeDir, sqlCommand))
-
-	logger.Info(strings.Join(command, " "))
 
 	cmd := exec.Command(command[0], command[1:]...)
 	cmd.Stdin = dumpFile
