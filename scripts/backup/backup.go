@@ -101,6 +101,21 @@ func exportPatch(version string, cnf config.Config) error {
 		return err
 	}
 
+	backupDir := fmt.Sprintf("%s/baadbaan_new/storage/app/backup/", cnf.DockerComposeDir)
+	if utils.DirectoryExists(backupDir) == false {
+		if err := os.Mkdir(backupDir, 755); err != nil {
+			return fmt.Errorf("Can not Backup Dir in Baadbaan %v", err)
+		}
+
+		if err := utils.ChangePermision("www-data", backupDir); err != nil {
+			return fmt.Errorf("Can not Change permission Backup Dir in Baadbaan %v", err)
+		}
+	}
+
+	if err := os.Rename(outputFile, fmt.Sprintf("%s/%s.tar.gz", backupDir, version)); err != nil {
+		return fmt.Errorf("Cannot Move File err is: %s", err)
+	}
+
 	for _, file := range files {
 		if err := os.Remove(file); err != nil {
 			fmt.Println("Error deleting file:", err)

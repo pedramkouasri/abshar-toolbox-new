@@ -15,7 +15,7 @@ type Server struct {
 }
 
 const (
-	httpAPITimeout = time.Second * 60
+	httpAPITimeout = time.Minute * 4
 	shutdwnTimeout = time.Second * 5
 )
 

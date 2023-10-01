@@ -14,7 +14,6 @@ build-205: build
 	systemctl stop supervisor.service
 	cp bin/update-toolbox /var/www/html/baadbaan-docker/services/update-toolbox
 	systemctl start supervisor.service
-	sleep 2 && curl localhost:9990/ping
 
 run: build
 	bin/update-toolbox

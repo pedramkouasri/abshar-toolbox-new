@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/db"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/logger"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/backup"
+	"github.com/pedramkousari/abshar-toolbox-new/scripts/restore"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/rollback"
 	"github.com/pedramkousari/abshar-toolbox-new/scripts/update"
 	"github.com/pedramkousari/abshar-toolbox-new/types"
@@ -34,7 +36,7 @@ func HandleFunc(cnf config.Config, server *Server) {
 	server.HandleFunc("/backup", backupHandle(cnf, server))
 	// server.HandleFunc("/state-backup", stateHandle)
 
-	// server.HandleFunc("/restore", restoreHandle(cnf, server))
+	server.HandleFunc("/restore", restoreHandle(cnf, server))
 	// server.HandleFunc("/state-restore", stateHandle)
 
 	server.HandleFunc("/stop", stopHandle(server))
@@ -80,7 +82,7 @@ func patchHandle(cnf config.Config, server *Server) func(w http.ResponseWriter, 
 		logger.Info("Started")
 
 		go func() {
-			diffPackages, err := Start(fileSrc, cnf)
+			diffPackages, err := StartUpdate(fileSrc, cnf)
 			if err != nil {
 				db.StoreError(err)
 				logger.Error(fmt.Errorf("Start Failed %v", err))
@@ -188,7 +190,7 @@ func stateHandle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Start(fileSrc string, cnf config.Config) ([]types.CreatePackageParams, error) {
+func StartUpdate(fileSrc string, cnf config.Config) ([]types.CreatePackageParams, error) {
 	if err := os.Mkdir("./temp", 0755); err != nil {
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("create directory err: %s", err)
@@ -269,8 +271,107 @@ func backupHandle(cnf config.Config, server *Server) func(w http.ResponseWriter,
 		logger.Info("Completed Backup")
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
+		w.Write([]byte(fmt.Sprintf(`{
+			"file-name": "%s.tar.gz"
 			"message": "Backup Completed"
+		}`, branchName)))
+	}
+}
+
+func restoreHandle(cnf config.Config, server *Server) func(w http.ResponseWriter, r *http.Request) {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer w.Header().Set("Content-Type", "application/json")
+
+		queryParams := r.URL.Query()
+		fileName := queryParams.Get("fileName")
+
+		if fileName == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{
+				"message": "File name is required"
+			}`))
+			return
+		}
+
+		fileSrc := cnf.DockerComposeDir + "/baadbaan_new/storage/app/backup/" + fileName
+
+		if !utils.FileExists(fileSrc) {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{
+				"message": "file not exists"
+			}`))
+			return
+		}
+
+		logger.Info("Restore Started")
+
+		// go func() {
+
+		logger.Info("Run Go Routine Update")
+		branch, err := StartRestore(fileSrc)
+		return
+
+		if err != nil {
+			logger.Error(fmt.Errorf("Start Restore Failed %v", err))
+			return
+		}
+
+		rs := restore.NewRestoreService(cnf)
+		if err := rs.Handle(branch); err != nil {
+			logger.Error(fmt.Errorf("Restore Failed %v", err))
+
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{
+				"message": "Restore Failed"
+			}`))
+
+			return
+		}
+
+		// }()
+		logger.Info("Completed Restore")
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{
+			"message": "Restore Completed"
 		}`))
 	}
+}
+
+func StartRestore(fileSrc string) (string, error) {
+	if err := os.Mkdir("./temp", 0755); err != nil {
+		if os.IsNotExist(err) {
+			return "", fmt.Errorf("create directory err: %s", err)
+		}
+	}
+
+	if err := utils.UntarGzip(fileSrc, "./temp"); err != nil {
+		return "", fmt.Errorf("UnZip File err: %s", err)
+	}
+
+	branchFile := "./temp/branch.txt"
+
+	if _, err := os.Stat(branchFile); err != nil {
+		return "", fmt.Errorf("branch.txt is err: %s", err)
+	}
+
+	file, err := os.Open(branchFile)
+	if err != nil {
+		return "", fmt.Errorf("open branch.txt is err: %s", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	var branch string
+	if scanner.Scan() {
+		branch = scanner.Text()
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("cannot scan file %v", err)
+	}
+
+	return branch, nil
 }

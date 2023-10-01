@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/contracts"
@@ -40,12 +41,12 @@ func (b *baadbaan) Backup(ctx context.Context) error {
 	select {
 	case err, ok := <-completeSignal:
 		if !ok {
-			logger.Info(fmt.Sprintf("Service Update %s Completed", b.serviceName))
+			logger.Info(fmt.Sprintf("Service Backup %s Completed", b.serviceName))
 			return nil
 		}
 
 		if err != nil {
-			return fmt.Errorf("Service Update Package %s is failed: %v", b.serviceName, err)
+			return fmt.Errorf("Service Backup Package %s is failed: %v", b.serviceName, err)
 		}
 
 		return nil
@@ -91,15 +92,22 @@ func (b *baadbaan) runBackup(ctx context.Context) error {
 			dbPath,
 		}
 
+		outputFile := pwd + "/temp/builds/baadbaan.tar"
+
 		excludes := []string{
-			"storage/app/patches",
-			"storage/app/versions",
+			"**/patches",
+			"**/versions",
+			"**/backup",
 		}
 
 		tarCommands := []string{
+			"nice",
+			"--10",
 			"tar",
+			"--transform",
+			fmt.Sprintf("s,%s,,S", strings.Replace(backupSqlDir, "/", "", 1)+"/"),
 			"-cf",
-			pwd + "/temp/builds/baadbaan.tar",
+			outputFile,
 		}
 
 		for _, excludePath := range excludes {
@@ -110,7 +118,8 @@ func (b *baadbaan) runBackup(ctx context.Context) error {
 			tarCommands = append(tarCommands, path)
 		}
 
-		cmd := exec.Command(tarCommands[0], tarCommands[1:]...)
+		// cmd := exec.Command(tarCommands[0], tarCommands[1:]...)
+		cmd := exec.Command("sh", "-c", strings.Join(tarCommands, " "))
 		cmd.Dir = b.dir
 
 		if _, err := cmd.Output(); err != nil {
@@ -118,6 +127,8 @@ func (b *baadbaan) runBackup(ctx context.Context) error {
 				return err
 			}
 		}
+
+		logger.Info("Stepy")
 		return nil
 	})
 	if err != nil {
