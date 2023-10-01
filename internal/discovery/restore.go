@@ -13,7 +13,7 @@ import (
 
 func NewRestore(cnf config.Config, branch string, loading contracts.Loader) *discovery {
 	return &discovery{
-		dir:         path.Join(cnf.DockerComposeDir, "discovery_new"),
+		dir:         path.Join(cnf.DockerComposeDir, "services/asset-discovery"),
 		branch:      branch,
 		serviceName: "discovery",
 		percent:     0,
