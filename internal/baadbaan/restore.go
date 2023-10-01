@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/contracts"
@@ -41,12 +40,12 @@ func (b *baadbaan) Restore(ctx context.Context) error {
 	select {
 	case err, ok := <-completeSignal:
 		if !ok {
-			logger.Info(fmt.Sprintf("Service Update %s Completed", b.serviceName))
+			logger.Info(fmt.Sprintf("Service Restore %s Completed", b.serviceName))
 			return nil
 		}
 
 		if err != nil {
-			return fmt.Errorf("Service Update Package %s is failed: %v", b.serviceName, err)
+			return fmt.Errorf("Service Restore Package %s is failed: %v", b.serviceName, err)
 		}
 
 		return nil
@@ -70,19 +69,20 @@ func (b *baadbaan) runRestore(ctx context.Context) error {
 			return fmt.Errorf("Cannot Remove File In Storage :%v err: %s out: %s", err, bufE.String(), out)
 		}
 
-		commands = []string{"find", "storage/app/", "-type", "d", "!", "-name", "patches", "!", "-name", "versions", "!", "-name", "backup", "-exec", "rm", "-rf", "{}", ";"}
-		logger.Info(strings.Join(commands, " "))
-		cmd = exec.Command(commands[0], commands[1:]...)
-		cmd.Dir = b.dir
-		cmd.Stderr = bufE
-		if out, err := cmd.Output(); err != nil {
-			return fmt.Errorf("Cannot Remove Folder In Storage :%v err: %s out: %s", err, bufE.String(), out)
-		}
+		commands = []string{"find", "storage/app/", "-type", "d", "!", "-name", "'patches'", "!", "-name", "'versions'", "!", "-name", "'backup'", "-exec", "rm", "-rf", "{}", ";"}
+
+		// cmd = exec.Command(commands[0], commands[1:]...)
+		// cmd.Dir = b.dir
+		// cmd.Stderr = bufE
+		// if out, err := cmd.Output(); err != nil {
+		// 	return fmt.Errorf("Cannot Remove Folder In Storage :%v err: %s out: %s", err, bufE.String(), out)
+		// }
 		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("Baadbaan Clean Storage Failed Error is: %s", err)
 	}
+	return nil
 
 	err = b.exec(ctx, 40, "Baadbaan Extracted Tar File", func() error {
 		return utils.ExtractTarFile(b.serviceName, b.dir)
