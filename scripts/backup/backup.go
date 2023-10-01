@@ -8,6 +8,8 @@ import (
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/baadbaan"
+	"github.com/pedramkousari/abshar-toolbox-new/internal/discovery"
+	"github.com/pedramkousari/abshar-toolbox-new/internal/technical"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/loading"
 	"github.com/pedramkousari/abshar-toolbox-new/utils"
 )
@@ -48,6 +50,30 @@ func (us backupService) Handle(branchName string) error {
 			go func() {
 				defer wg.Done()
 				if err := bs.Backup(ctx); err != nil {
+					hasError <- err
+				}
+			}()
+		}
+
+		if serviceName == "technical" {
+			ts := technical.NewBackup(us.cnf, branchName, loading)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := ts.Backup(ctx); err != nil {
+					hasError <- err
+				}
+			}()
+		}
+
+		if serviceName == "discovery" {
+			dis := discovery.NewBackup(us.cnf, branchName, loading)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := dis.Backup(ctx); err != nil {
 					hasError <- err
 				}
 			}()
