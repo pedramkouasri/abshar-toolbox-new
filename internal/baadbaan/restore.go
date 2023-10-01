@@ -1,11 +1,13 @@
 package baadbaan
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/contracts"
@@ -31,7 +33,7 @@ func (b *baadbaan) Restore(ctx context.Context) error {
 	completeSignal := make(chan error)
 	go func() {
 		defer close(completeSignal)
-		if err := b.runUpdate(ctx); err != nil {
+		if err := b.runRestore(ctx); err != nil {
 			completeSignal <- err
 		}
 	}()
@@ -58,40 +60,23 @@ func (b *baadbaan) Restore(ctx context.Context) error {
 func (b *baadbaan) runRestore(ctx context.Context) error {
 	var err error
 
-	if err := utils.RestoreDatabase("baadbaan", b.cnf.DockerComposeDir, b.env); err != nil {
-		return fmt.Errorf("Baadbaan Restore DB Failed %v ", err)
-	}
-
-	logger.Info("Baadbaan Restore DB")
-
-	if err := utils.RestoreCode(b.dir); err != nil {
-		return fmt.Errorf("Baadbaan Restore Code Failed %v ", err)
-	}
-
-	logger.Info("Baadbaan Restore Code")
-
-	err = b.exec(ctx, 10, "Baadbaan Restore Branch", func() error {
-		return utils.SwitchBranch(b.dir, b.branch)
-	})
-	if err != nil {
-		return fmt.Errorf("Baadbaan Restore Branch Failed Error is: %s", err)
-	}
-
-	logger.Info("Baadbaan Restored Branch")
-
 	err = b.exec(ctx, 10, "Clean Storage", func() error {
-		cmd := exec.Command("rm", "-r", "find storage/app/ -type f -links 2")
+		commands := []string{"find", "storage/app/", "-type", "f", "-links", "2", "-exec", "rm", "-f", "{}", ";"}
+		cmd := exec.Command(commands[0], commands[1:]...)
 		cmd.Dir = b.dir
-		cmd.Stderr = os.Stderr
-		if _, err := cmd.Output(); err != nil {
-			return fmt.Errorf("Cannot Remove File In Storage :%v", err)
+		bufE := bytes.NewBuffer([]byte{})
+		cmd.Stderr = bufE
+		if out, err := cmd.Output(); err != nil {
+			return fmt.Errorf("Cannot Remove File In Storage :%v err: %s out: %s", err, bufE.String(), out)
 		}
 
-		cmd = exec.Command("rm", "-r", "find storage/app/ -type d ! -name 'patches' ! -name 'versions' ! -name 'backup'")
+		commands = []string{"find", "storage/app/", "-type", "d", "!", "-name", "patches", "!", "-name", "versions", "!", "-name", "backup", "-exec", "rm", "-rf", "{}", ";"}
+		logger.Info(strings.Join(commands, " "))
+		cmd = exec.Command(commands[0], commands[1:]...)
 		cmd.Dir = b.dir
-		cmd.Stderr = os.Stderr
-		if _, err := cmd.Output(); err != nil {
-			return fmt.Errorf("Cannot Remove Folder In Storage :%v", err)
+		cmd.Stderr = bufE
+		if out, err := cmd.Output(); err != nil {
+			return fmt.Errorf("Cannot Remove Folder In Storage :%v err: %s out: %s", err, bufE.String(), out)
 		}
 		return nil
 	})
@@ -99,12 +84,43 @@ func (b *baadbaan) runRestore(ctx context.Context) error {
 		return fmt.Errorf("Baadbaan Clean Storage Failed Error is: %s", err)
 	}
 
-	// err = b.exec(ctx, 100, "Restore Storage", func() error {
-	// 	return nil
-	// })
-	// if err != nil {
-	// 	return fmt.Errorf("Baadbaan Restore Storage Failed Error is: %s", err)
-	// }
+	err = b.exec(ctx, 40, "Baadbaan Extracted Tar File", func() error {
+		return utils.ExtractTarFile(b.serviceName, b.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Extract Tar File Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 45, "Baadbaan Move Sql File", func() error {
+		cd, _ := os.Getwd()
+		backupSqlDir := cd + "/backupSql"
+
+		return os.Rename(fmt.Sprintf("%s/%s.sql", b.dir, b.serviceName), fmt.Sprintf("%s/%s.sql", backupSqlDir, b.serviceName))
+	})
+	if err != nil {
+		return fmt.Errorf("Extract Tar File Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 60, "Baadbaan Restore DB ", func() error {
+		return utils.RestoreDatabase("baadbaan", b.cnf.DockerComposeDir, b.env)
+	})
+	if err != nil {
+		return fmt.Errorf("Baadbaan Restore DB Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 70, "Baadbaan Restore Code ", func() error {
+		return utils.RestoreCode(b.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Baadbaan Restore Code Failed Error Is: %s", err)
+	}
+
+	err = b.exec(ctx, 100, "Baadbaan Restore Branch", func() error {
+		return utils.SwitchBranch(b.dir, b.branch)
+	})
+	if err != nil {
+		return fmt.Errorf("Baadbaan Restore Branch Failed Error is: %s", err)
+	}
 
 	return nil
 }

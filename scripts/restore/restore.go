@@ -25,6 +25,8 @@ func (us restoreService) Handle(branchName string) error {
 	defer cancel()
 
 	wg := new(sync.WaitGroup)
+
+	//TODO:change
 	services := []string{"baadbaan"}
 	loading := loading.NewLoading(services, wg)
 	hasError := make(chan error)

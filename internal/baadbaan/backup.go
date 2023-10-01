@@ -81,8 +81,8 @@ func (b *baadbaan) runBackup(ctx context.Context) error {
 		return fmt.Errorf("Backup Database Failed Error Is: %s", err)
 	}
 
-	err = b.exec(ctx, 100, "Create Tar File", func() error {
-		pwd, _ := os.Getwd()
+	pwd, _ := os.Getwd()
+	err = b.exec(ctx, 90, "Create Tar File", func() error {
 		backupSqlDir := pwd + "/backupSql"
 
 		dbPath := backupSqlDir + "/" + b.serviceName + ".sql"
@@ -127,12 +127,21 @@ func (b *baadbaan) runBackup(ctx context.Context) error {
 				return err
 			}
 		}
-
-		logger.Info("Stepy")
 		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("Cannot Create Tar File: %v", err)
+	}
+
+	err = b.exec(ctx, 100, "Baadbaan Gzip Complete", func() error {
+		logger.Info(strings.Join([]string{"gzip", "-f", fmt.Sprintf("%s/%s.tar", pwd+"/temp/builds", b.serviceName)}, " "))
+		cmd := exec.Command("gzip", "-f", fmt.Sprintf("%s/%s.tar", pwd+"/temp/builds", b.serviceName))
+		cmd.Stderr = os.Stderr
+		_, err := cmd.Output()
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("Baadbaan Gzip Failed Error Is: %s", err)
 	}
 
 	return nil

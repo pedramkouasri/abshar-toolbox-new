@@ -284,9 +284,9 @@ func restoreHandle(cnf config.Config, server *Server) func(w http.ResponseWriter
 		defer w.Header().Set("Content-Type", "application/json")
 
 		queryParams := r.URL.Query()
-		fileName := queryParams.Get("fileName")
+		filename := queryParams.Get("filename")
 
-		if fileName == "" {
+		if filename == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(`{
 				"message": "File name is required"
@@ -294,7 +294,7 @@ func restoreHandle(cnf config.Config, server *Server) func(w http.ResponseWriter
 			return
 		}
 
-		fileSrc := cnf.DockerComposeDir + "/baadbaan_new/storage/app/backup/" + fileName
+		fileSrc := cnf.DockerComposeDir + "/baadbaan_new/storage/app/backup/" + filename
 
 		if !utils.FileExists(fileSrc) {
 			w.WriteHeader(http.StatusBadRequest)
@@ -310,8 +310,6 @@ func restoreHandle(cnf config.Config, server *Server) func(w http.ResponseWriter
 
 		logger.Info("Run Go Routine Update")
 		branch, err := StartRestore(fileSrc)
-		return
-
 		if err != nil {
 			logger.Error(fmt.Errorf("Start Restore Failed %v", err))
 			return
