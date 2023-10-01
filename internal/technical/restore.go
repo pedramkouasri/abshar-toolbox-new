@@ -68,7 +68,7 @@ func (t *technical) runRestore(ctx context.Context) error {
 			return fmt.Errorf("Cannot Remove File In Storage :%v err: %s out: %s", err, bufE.String(), out)
 		}
 
-		commands = []string{"sh", "-c", "find storage/app/ -type d -exec rm -rf {} +"}
+		commands = []string{"sh", "-c", "find storage/app/ -type d ! -name 'app' -exec rm -rf {} +"}
 
 		cmd = exec.Command(commands[0], commands[1:]...)
 		cmd.Dir = t.dir
