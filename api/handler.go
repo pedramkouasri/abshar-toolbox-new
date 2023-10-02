@@ -315,6 +315,14 @@ func restoreHandle(cnf config.Config, server *Server) func(w http.ResponseWriter
 			return
 		}
 
+		restpreFilePath := cnf.DockerComposeDir + "/baadbaan_new/storage/framework/restore"
+		restoreFile, err := os.Create(restpreFilePath)
+		if err != nil {
+			logger.Error(fmt.Errorf("cannot create restore file in baadbaan storeage error is: %v", err))
+		}
+		restoreFile.Close()
+		defer os.Remove(restpreFilePath)
+
 		rs := restore.NewRestoreService(cnf)
 		if err := rs.Handle(branch); err != nil {
 			logger.Error(fmt.Errorf("Restore Failed %v", err))

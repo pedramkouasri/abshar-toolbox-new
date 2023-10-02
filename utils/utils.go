@@ -145,4 +145,5 @@ func GetUserIdAndGroupId(username string) (uid int, gid int, err error) {
 	if err != nil {
 		err = fmt.Errorf("Error retrieving convert gid to string for gid %s: %s\n", u.Gid, err)
 	}
+	return
 }
