@@ -136,7 +136,6 @@ func (b *baadbaan) runBackup(ctx context.Context) error {
 	}
 
 	err = b.exec(ctx, 100, "Baadbaan Gzip Complete", func() error {
-		logger.Info(strings.Join([]string{"gzip", "-f", fmt.Sprintf("%s/%s.tar", pwd+"/temp/builds", b.serviceName)}, " "))
 		cmd := exec.Command("gzip", "-f", fmt.Sprintf("%s/%s.tar", pwd+"/temp/builds", b.serviceName))
 		cmd.Stderr = os.Stderr
 		_, err := cmd.Output()

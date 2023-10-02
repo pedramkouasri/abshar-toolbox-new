@@ -178,5 +178,10 @@ func exportPatch(version string, cnf config.Config, storepath string) error {
 		return err
 	}
 
+	if err := os.Mkdir(tempBuildPath, 0755); err != nil {
+		fmt.Println("Error Create Temp Directory file :", err)
+		return err
+	}
+
 	return nil
 }
