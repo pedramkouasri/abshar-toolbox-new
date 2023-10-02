@@ -40,20 +40,7 @@ sudo chgrp -R www-data storage bootstrap/cache
 sudo chmod -R ug+rwx storage bootstrap/cache
 */
 func ChangePermision(username string, dir string) error {
-	u, err := user.Lookup(username)
-	if err != nil {
-		return fmt.Errorf("Error retrieving information for user %s: %s\n", username, err)
-	}
-
-	uid, err := strconv.Atoi(u.Uid)
-	if err != nil {
-		return fmt.Errorf("Error retrieving convert uid to string for uid %s: %s\n", u.Uid, err)
-	}
-
-	gid, err := strconv.Atoi(u.Gid)
-	if err != nil {
-		return fmt.Errorf("Error retrieving convert gid to string for gid %s: %s\n", u.Gid, err)
-	}
+	uid, gid, err := GetUserIdAndGroupId(username)
 
 	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -139,4 +126,23 @@ func DirectoryExists(path string) bool {
 	}
 
 	return fileInfo.IsDir()
+}
+
+func GetUserIdAndGroupId(username string) (uid int, gid int, err error) {
+	u, err := user.Lookup(username)
+	if err != nil {
+		err = fmt.Errorf("Error retrieving information for user %s: %s\n", username, err)
+		return
+	}
+
+	uid, err = strconv.Atoi(u.Uid)
+	if err != nil {
+		err = fmt.Errorf("Error retrieving convert uid to string for uid %s: %s\n", u.Uid, err)
+		return
+	}
+
+	gid, err = strconv.Atoi(u.Gid)
+	if err != nil {
+		err = fmt.Errorf("Error retrieving convert gid to string for gid %s: %s\n", u.Gid, err)
+	}
 }

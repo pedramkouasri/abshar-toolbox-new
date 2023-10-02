@@ -147,8 +147,14 @@ func exportPatch(version string, cnf config.Config) error {
 		}
 	}
 
-	if err := os.Rename(outputFile, fmt.Sprintf("%s/%s.tar.gz", backupDir, version)); err != nil {
+	outputGzFile := fmt.Sprintf("%s/%s.tar.gz", backupDir, version)
+	if err := os.Rename(outputFile, outputGzFile); err != nil {
 		return fmt.Errorf("Cannot Move File err is: %s", err)
+	}
+
+	uid, gid, err := utils.GetUserIdAndGroupId("www-data")
+	if err = os.Chown(outputGzFile, uid, gid); err != nil {
+		return fmt.Errorf("Failed to change ownership of %s: %v\n", outputGzFile, err)
 	}
 
 	for _, file := range files {

@@ -114,11 +114,18 @@ func (t *technical) runRestore(ctx context.Context) error {
 		return fmt.Errorf("Technical Restore Code Failed Error Is: %s", err)
 	}
 
-	err = t.exec(ctx, 100, "Technical Restore Branch", func() error {
+	err = t.exec(ctx, 95, "Technical Restore Branch", func() error {
 		return utils.SwitchBranch(t.dir, t.branch)
 	})
 	if err != nil {
 		return fmt.Errorf("Technical Restore Branch Failed Error is: %s", err)
+	}
+
+	err = t.exec(ctx, 100, "Technical Changed Permission", func() error {
+		return utils.ChangePermision("www-data", t.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Change Permission has Error : %s", err)
 	}
 
 	return nil

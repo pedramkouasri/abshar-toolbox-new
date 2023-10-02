@@ -115,11 +115,18 @@ func (b *baadbaan) runRestore(ctx context.Context) error {
 		return fmt.Errorf("Baadbaan Restore Code Failed Error Is: %s", err)
 	}
 
-	err = b.exec(ctx, 100, "Baadbaan Restore Branch", func() error {
+	err = b.exec(ctx, 95, "Baadbaan Restore Branch", func() error {
 		return utils.SwitchBranch(b.dir, b.branch)
 	})
 	if err != nil {
 		return fmt.Errorf("Baadbaan Restore Branch Failed Error is: %s", err)
+	}
+
+	err = b.exec(ctx, 100, "Baadbaan Changed Permission", func() error {
+		return utils.ChangePermision("www-data", b.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Change Permission has Error : %s", err)
 	}
 
 	return nil
