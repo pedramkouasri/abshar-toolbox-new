@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
@@ -24,7 +25,7 @@ func NewBackupService(cnf config.Config) backupService {
 	}
 }
 
-func (us backupService) Handle(branchName string) error {
+func (us backupService) Handle(branchName, storepath string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), us.cnf.UpdateTimeOut)
 	defer cancel()
 
@@ -89,7 +90,7 @@ func (us backupService) Handle(branchName string) error {
 		select {
 		case res, ok := <-hasError:
 			if !ok {
-				if err := exportPatch(branchName, us.cnf); err != nil {
+				if err := exportPatch(branchName, us.cnf, storepath); err != nil {
 					return err
 				}
 
@@ -108,7 +109,7 @@ func (us backupService) Handle(branchName string) error {
 
 }
 
-func exportPatch(version string, cnf config.Config) error {
+func exportPatch(version string, cnf config.Config, storepath string) error {
 	tempBuildPath := "./temp/builds"
 
 	os.WriteFile(tempBuildPath+"/branch.txt", []byte(version), 0644)
@@ -136,25 +137,33 @@ func exportPatch(version string, cnf config.Config) error {
 		return err
 	}
 
-	backupDir := fmt.Sprintf("%s/baadbaan_new/storage/app/backup/", cnf.DockerComposeDir)
-	if utils.DirectoryExists(backupDir) == false {
-		if err := os.Mkdir(backupDir, 755); err != nil {
-			return fmt.Errorf("Can not Backup Dir in Baadbaan %v", err)
+	if strings.TrimSpace(storepath) == "" {
+		backupDir := fmt.Sprintf("%s/baadbaan_new/storage/app/backup/", cnf.DockerComposeDir)
+		if utils.DirectoryExists(backupDir) == false {
+			if err := os.Mkdir(backupDir, 755); err != nil {
+				return fmt.Errorf("Can not Backup Dir in Baadbaan %v", err)
+			}
+
+			if err := utils.ChangePermision("www-data", backupDir); err != nil {
+				return fmt.Errorf("Can not Change permission Backup Dir in Baadbaan %v", err)
+			}
 		}
 
-		if err := utils.ChangePermision("www-data", backupDir); err != nil {
-			return fmt.Errorf("Can not Change permission Backup Dir in Baadbaan %v", err)
+		outputGzFile := fmt.Sprintf("%s/%s.tar.gz", backupDir, version)
+		if err := os.Rename(outputFile, outputGzFile); err != nil {
+			return fmt.Errorf("Cannot Move File err is: %s", err)
 		}
-	}
 
-	outputGzFile := fmt.Sprintf("%s/%s.tar.gz", backupDir, version)
-	if err := os.Rename(outputFile, outputGzFile); err != nil {
-		return fmt.Errorf("Cannot Move File err is: %s", err)
-	}
+		uid, gid, err := utils.GetUserIdAndGroupId("www-data")
+		if err = os.Chown(outputGzFile, uid, gid); err != nil {
+			return fmt.Errorf("Failed to change ownership of %s: %v\n", outputGzFile, err)
+		}
 
-	uid, gid, err := utils.GetUserIdAndGroupId("www-data")
-	if err = os.Chown(outputGzFile, uid, gid); err != nil {
-		return fmt.Errorf("Failed to change ownership of %s: %v\n", outputGzFile, err)
+	} else {
+		outputGzFile := fmt.Sprintf("%s/%s.tar.gz", storepath, version)
+		if err := os.Rename(outputFile, outputGzFile); err != nil {
+			return fmt.Errorf("Cannot Move File err is: %s", err)
+		}
 	}
 
 	for _, file := range files {

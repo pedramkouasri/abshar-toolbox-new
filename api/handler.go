@@ -246,6 +246,9 @@ func backupHandle(cnf config.Config, server *Server) func(w http.ResponseWriter,
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer w.Header().Set("Content-Type", "application/json")
 
+		queryParams := r.URL.Query()
+		storepath := queryParams.Get("storepath")
+
 		branchName := time.Now().Format("2006-01-02-15-04-05")
 
 		logger.Info("Backup Started")
@@ -255,7 +258,7 @@ func backupHandle(cnf config.Config, server *Server) func(w http.ResponseWriter,
 		logger.Info("Run Go Routine Update")
 		bk := backup.NewBackupService(cnf)
 
-		err := bk.Handle(branchName)
+		err := bk.Handle(branchName, storepath)
 		if err != nil {
 			logger.Error(fmt.Errorf("Backup Failed %v", err))
 

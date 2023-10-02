@@ -98,6 +98,8 @@ func (b *baadbaan) runBackup(ctx context.Context) error {
 			"**/patches",
 			"**/versions",
 			"**/backup",
+			"support.txt",
+			"exp.txt",
 		}
 
 		tarCommands := []string{

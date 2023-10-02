@@ -60,7 +60,7 @@ func (b *baadbaan) runRestore(ctx context.Context) error {
 	var err error
 
 	err = b.exec(ctx, 10, "Clean Storage", func() error {
-		commands := []string{"sh", "-c", `find storage/app/ -type f -links 2 -exec rm -f {} +`}
+		commands := []string{"sh", "-c", `find storage/app/ -type f ! -name 'support.txt' ! -name 'exp.txt' -links 2 -exec rm -f {} +`}
 		cmd := exec.Command(commands[0], commands[1:]...)
 		cmd.Dir = b.dir
 		bufE := bytes.NewBuffer([]byte{})
