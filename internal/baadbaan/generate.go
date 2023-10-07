@@ -1,6 +1,7 @@
 package baadbaan
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -129,6 +130,23 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 			return fmt.Errorf("Cannot Composer Install: %v", err)
 		}
 
+		//TODO::REMOVED FOR PHP-EXCELL
+		// err = b.exec(ctx, 65, "MOVE phpexcel", func() error {
+		// 	if err := os.RemoveAll(fmt.Sprintf("%s/vendor/phpoffice/phpexcel", b.dir)); err != nil {
+		// 		return err
+		// 	}
+
+		// 	cmd := exec.Command("cp", "-rf", b.cnf.DockerComposeDir+"/phpexcel", fmt.Sprintf("%s/vendor/phpoffice/phpexcel", b.dir))
+
+		// 	if err := cmd.Run(); err != nil {
+		// 		return err
+		// 	}
+		// 	return nil
+		// })
+		// if err != nil {
+		// 	return fmt.Errorf("Cannot Composer Install: %v", err)
+		// }
+
 		err = b.exec(ctx, 70, "Generate Json Diff Vendor", func() error {
 			return utils.GenerateDiffJson(b.dir, b.tempDir, b.tag1, b.tag2)
 		})
@@ -177,14 +195,18 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 }
 
 func addPhpExcellToTarFile(dir string, dockerComposeDir string) error {
-	cmd := exec.Command("tar", "--transform", "s,^,vendor/,S", "-rf", dir+"/patch.tar", "phpexcel")
+	pathes := "phpexcel"
 
-	cmd.Dir = dockerComposeDir
-	cmd.Stderr = os.Stderr
-	// cmd.Stdout = os.Stdout
+	cmd := exec.Command("sh", "-c", fmt.Sprintf(`tar --directory="%s" --transform="s,^,vendor/phpoffice/,S" -rf %s/patch.tar %s`, dockerComposeDir, dir, pathes))
+	bufE := bytes.NewBuffer([]byte{})
+	cmd.Stderr = bufE
 
-	if err := cmd.Run(); err != nil {
-		return err
+	_, err := cmd.Output()
+	if err != nil {
+		if err.Error() != "exit status 2" {
+			return fmt.Errorf("%v %s", err, bufE.String())
+		}
 	}
+
 	return nil
 }

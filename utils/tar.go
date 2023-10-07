@@ -2,6 +2,7 @@ package utils
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
@@ -97,24 +98,28 @@ func CreateTarFile(dir string, tempDir string) error {
 
 func AddDiffPackageToTarFile(dir string, tempDir string) error {
 	diffFile, err := getDiffPackages(tempDir)
+
+	// //TODO::REMOVED FOR PHP-EXCELL
+	// diffFile["phpoffice/phpexcel"] = []string{}
+
 	if err != nil {
 		return err
-	}
-	for packageName := range diffFile {
-		cmd := exec.Command("tar", "-rf", "./patch.tar", "vendor/"+packageName)
-		cmd.Dir = dir
-		_, err := cmd.Output()
-		if err != nil {
-			return err
-		}
-		return nil
 	}
 
-	cmd := exec.Command("tar", "-rf", "./patch.tar", "vendor/composer/installed.json")
-	cmd.Dir = dir
+	pathes := "vendor/composer/installed.json"
+	for packageName := range diffFile {
+		pathes += " vendor/" + packageName
+	}
+
+	cmd := exec.Command("sh", "-c", fmt.Sprintf(`tar --directory="%s" -rf %s/patch.tar %s`, dir, dir, pathes))
+	bufE := bytes.NewBuffer([]byte{})
+	cmd.Stderr = bufE
+
 	_, err = cmd.Output()
 	if err != nil {
-		return err
+		if err.Error() != "exit status 2" {
+			return fmt.Errorf("%v %s", err, bufE.String())
+		}
 	}
 
 	return nil
