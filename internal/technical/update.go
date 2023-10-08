@@ -106,6 +106,13 @@ func (t *technical) runUpdate(ctx context.Context) error {
 		return fmt.Errorf("Composer Dump Autoload Failed Error Is: %s", err)
 	}
 
+	err = t.exec(ctx, 70, "Technical Config Clear Complete", func() error {
+		return utils.ConfigClear(t.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Config Clear Failed Error Is: %s", err)
+	}
+
 	err = t.exec(ctx, 90, "Technical Migrated Database", func() error {
 		return utils.MigrateDB(t.containerName)
 	})

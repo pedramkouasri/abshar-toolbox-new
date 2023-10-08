@@ -99,6 +99,13 @@ func (b *baadbaan) runUpdate(ctx context.Context) error {
 		return fmt.Errorf("Composer Dump Autoload Failed Error Is: %s", err)
 	}
 
+	err = b.exec(ctx, 70, "Baadbaan Config Clear Complete", func() error {
+		return utils.ConfigClear(b.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Config Clear Failed Error Is: %s", err)
+	}
+
 	err = b.exec(ctx, 90, "Baadbaan Migrated Database", func() error {
 		return utils.MigrateDB(b.containerName)
 	})

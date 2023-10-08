@@ -170,6 +170,13 @@ func (b *baadbaan) runGenerate(ctx context.Context) error {
 		return fmt.Errorf("Cannot Add PhpExcel: %v", err)
 	}
 
+	err = b.exec(ctx, 80, "Add GuzzlePromises", func() error {
+		return addGuzzlePromises(b.dir)
+	})
+	if err != nil {
+		return fmt.Errorf("Cannot Add GuzzlePromises: %v", err)
+	}
+
 	err = b.exec(ctx, 90, "Copy Tar File To Temp Directory", func() error {
 		return os.Rename(b.dir+"/patch.tar", b.tempDir+"/patch.tar")
 	})
@@ -198,6 +205,23 @@ func addPhpExcellToTarFile(dir string, dockerComposeDir string) error {
 	pathes := "phpexcel"
 
 	cmd := exec.Command("sh", "-c", fmt.Sprintf(`tar --directory="%s" --transform="s,^,vendor/phpoffice/,S" -rf %s/patch.tar %s`, dockerComposeDir, dir, pathes))
+	bufE := bytes.NewBuffer([]byte{})
+	cmd.Stderr = bufE
+
+	_, err := cmd.Output()
+	if err != nil {
+		if err.Error() != "exit status 2" {
+			return fmt.Errorf("%v %s", err, bufE.String())
+		}
+	}
+
+	return nil
+}
+
+func addGuzzlePromises(dir string) error {
+	pathes := "vendor/guzzlehttp/promises"
+
+	cmd := exec.Command("sh", "-c", fmt.Sprintf(`tar --directory="%s" -rf %s/patch.tar %s`, dir, dir, pathes))
 	bufE := bytes.NewBuffer([]byte{})
 	cmd.Stderr = bufE
 

@@ -15,6 +15,9 @@ build-205: build
 	cp bin/update-toolbox /var/www/html/baadbaan-docker/services/update-toolbox
 	systemctl start supervisor.service
 
+build-231: build
+	scp bin/update-toolbox root@10.10.10.231:/var/www/html/baadbaan-docker/services/update-toolbox
+
 run: build
 	bin/update-toolbox
 
