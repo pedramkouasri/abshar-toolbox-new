@@ -5,6 +5,7 @@ const (
 	composerInstallCommand = "composer install --no-scripts --no-interaction"
 	composerDumpCommand    = "composer dump-autoload --no-interaction"
 	migrateCommand         = "php artisan migrate --force"
+	migrateDownCommand     = "php artisan migrate:down --force"
 	viewClearCommand       = "php artisan view:clear"
 	configCacheCommand     = "php artisan config:cache"
 	removeConfig           = "rm -f `find bootstrap/cache/ ! -name '.gitignore' -type f`"

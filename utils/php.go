@@ -42,6 +42,20 @@ func MigrateDB(containerName string) error {
 	return nil
 }
 
+func MigrateDown(containerName string) error {
+	var command []string = getCommand(migrateDownCommand, containerName)
+
+	cmd := exec.Command(command[0], command[1:]...)
+	cmd.Stderr = os.Stderr
+	// cmd.Stdout = os.Stdout
+
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func ViewClear(containerName string) error {
 	var command []string = getCommand(viewClearCommand, containerName)
 
