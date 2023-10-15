@@ -4,10 +4,11 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
-	"github.com/pedramkousari/abshar-toolbox-new/cmd/patch"
-	"github.com/pedramkousari/abshar-toolbox-new/cmd/server"
+	"github.com/pedramkousari/abshar-toolbox-new/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -33,8 +34,35 @@ func Execute() {
 }
 
 func addCommands() {
-	rootCmd.AddCommand(patch.PatchCmd)
-	rootCmd.AddCommand(server.ServerCmd)
+	rootCmd.AddCommand(&cobra.Command{
+		Use:   "decrypt",
+		Short: "Decrypt Patch File",
+		Long:  ``,
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			fileSrc := args[0]
+
+			if !utils.FileExists(fileSrc) {
+				panic("File Not Found")
+			}
+
+			if err := os.Mkdir("./temp", 0755); err != nil {
+				if os.IsNotExist(err) {
+					panic(fmt.Errorf("create directory err: %s", err))
+				}
+			}
+
+			if err := utils.DecryptFile([]byte("e10adc3949ba59abbe56e057f20f883e"), fileSrc, strings.TrimSuffix(fileSrc, ".enc")); err != nil {
+				panic(fmt.Errorf("Decrypt File err:  %s", err))
+			}
+
+			if err := utils.UntarGzip(strings.TrimSuffix(fileSrc, ".enc"), "./temp"); err != nil {
+				panic(fmt.Errorf("UnZip File err  %s", err))
+			}
+		},
+	})
+	// rootCmd.AddCommand(patch.PatchCmd)
+	// rootCmd.AddCommand(server.ServerCmd)
 }
 
 func init() {
