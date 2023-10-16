@@ -31,12 +31,12 @@ type Config struct {
 var config Config
 
 func init() {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		panic(fmt.Errorf("can not get user home directory %v", err))
-	}
+	// home, err := os.UserHomeDir()
+	// if err != nil {
+	// 	panic(fmt.Errorf("can not get user home directory %v", err))
+	// }
 
-	viper.AddConfigPath(home)
+	// viper.AddConfigPath(home)
 	viper.AddConfigPath(".")
 	viper.SetConfigType("yaml")
 	viper.SetConfigName("update-toolbox")

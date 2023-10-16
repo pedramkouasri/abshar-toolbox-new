@@ -132,7 +132,7 @@ func RemoveTag(dir string, branch string) {
 }
 
 func Fetch(dir string) error {
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("git --git-dir %s/.git  fetch", dir))
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("git --git-dir %s/.git  fetch --force", dir))
 
 	_, err := cmd.Output()
 	if err != nil {
