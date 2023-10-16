@@ -18,6 +18,9 @@ import (
 var excludePath = []string{
 	".env",
 	"vmanager.json",
+	"bootstrap/cache/config.php",
+	"bootstrap/cache/packages.php",
+	"bootstrap/cache/services.php",
 }
 
 var appendPath = []string{}
