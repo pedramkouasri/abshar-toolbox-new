@@ -28,8 +28,8 @@ func LoadEnv(envFolder string) *ConfigService {
 		parts := strings.SplitN(line, "=", 2)
 
 		if len(parts) == 2 {
-			key := parts[0]
-			value := parts[1]
+			key := strings.TrimSpace(parts[0])
+			value := strings.TrimSpace(parts[1])
 
 			if strings.HasPrefix(key, "#") {
 				continue
