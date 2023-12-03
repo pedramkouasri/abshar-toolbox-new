@@ -22,7 +22,7 @@ func startServer(cmd *cobra.Command) {
 	wg.Add(1)
 
 	cnf := config.GetCnf()
-	server := api.NewServer(cnf.Server.Host, cnf.Server.Port)
+	server := api.NewServer("172.17.0.1", 9990)
 
 	api.HandleFunc(cnf, server)
 	go server.Run(wg)
