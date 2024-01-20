@@ -1,10 +1,12 @@
 package server
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/pedramkousari/abshar-toolbox-new/api"
 	"github.com/pedramkousari/abshar-toolbox-new/config"
+	"github.com/pedramkousari/abshar-toolbox-new/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -18,11 +20,16 @@ var ServerCmd = &cobra.Command{
 }
 
 func startServer(cmd *cobra.Command) {
+	ip, err := utils.GetInterfaceIpv4Addr("docker0")
+	if err != nil {
+		fmt.Errorf("err is :%s", err)
+	}
+
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 
 	cnf := config.GetCnf()
-	server := api.NewServer("172.17.0.1", 9990)
+	server := api.NewServer(ip, 9990)
 
 	api.HandleFunc(cnf, server)
 	go server.Run(wg)
