@@ -14,8 +14,8 @@ type Server struct {
 }
 
 const (
-	updateTimeOut   = time.Minute * 15
-	rollbackTimeOut = time.Minute * 5
+	updateTimeOut   = time.Minute * 45
+	rollbackTimeOut = time.Minute * 45
 )
 
 type Config struct {
