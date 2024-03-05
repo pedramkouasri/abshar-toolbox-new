@@ -9,7 +9,6 @@ import (
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/baadbaan"
-	"github.com/pedramkousari/abshar-toolbox-new/internal/discovery"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/technical"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/loading"
 )
@@ -71,17 +70,17 @@ func (us restoreService) Handle(branchName string) error {
 			}()
 		}
 
-		if serviceName == "discovery" {
-			ds := discovery.NewRestore(us.cnf, branchName, loading)
+		// if serviceName == "discovery" {
+		// 	ds := discovery.NewRestore(us.cnf, branchName, loading)
 
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				if err := ds.Restore(ctx); err != nil {
-					hasError <- err
-				}
-			}()
-		}
+		// 	wg.Add(1)
+		// 	go func() {
+		// 		defer wg.Done()
+		// 		if err := ds.Restore(ctx); err != nil {
+		// 			hasError <- err
+		// 		}
+		// 	}()
+		// }
 	}
 
 	go func() {

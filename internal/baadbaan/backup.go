@@ -60,19 +60,19 @@ func (b *baadbaan) Backup(ctx context.Context) error {
 func (b *baadbaan) runBackup(ctx context.Context) error {
 	var err error
 
-	err = b.exec(ctx, 10, "Baadbaan Create Branch", func() error {
-		return utils.CreateBranch(b.dir, b.branch)
-	})
-	if err != nil {
-		return fmt.Errorf("Baadbaan Create Branch Failed Error is: %s", err)
-	}
+	// err = b.exec(ctx, 10, "Baadbaan Create Branch", func() error {
+	// 	return utils.CreateBranch(b.dir, b.branch)
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Baadbaan Create Branch Failed Error is: %s", err)
+	// }
 
-	err = b.exec(ctx, 30, "Baadbaan Commit files", func() error {
-		return b.commitIfChanges(ctx)
-	})
-	if err != nil {
-		return fmt.Errorf("Baadbaan Commit Failed Error is: %s", err)
-	}
+	// err = b.exec(ctx, 30, "Baadbaan Commit files", func() error {
+	// 	return b.commitIfChanges(ctx)
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Baadbaan Commit Failed Error is: %s", err)
+	// }
 
 	err = b.exec(ctx, 40, "Baadbaan Backup Database Complete", func() error {
 		return utils.BackupDatabase(b.serviceName, b.cnf.DockerComposeDir, b.env)

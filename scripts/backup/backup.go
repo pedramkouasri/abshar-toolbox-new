@@ -9,7 +9,6 @@ import (
 
 	"github.com/pedramkousari/abshar-toolbox-new/config"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/baadbaan"
-	"github.com/pedramkousari/abshar-toolbox-new/internal/discovery"
 	"github.com/pedramkousari/abshar-toolbox-new/internal/technical"
 	"github.com/pedramkousari/abshar-toolbox-new/pkg/loading"
 	"github.com/pedramkousari/abshar-toolbox-new/utils"
@@ -36,9 +35,9 @@ func (us backupService) Handle(branchName, storepath string) error {
 		services = append(services, "technical")
 	}
 
-	if utils.DirectoryExists(us.cnf.DockerComposeDir + "/services/asset-discovery") {
-		services = append(services, "discovery")
-	}
+	// if utils.DirectoryExists(us.cnf.DockerComposeDir + "/services/asset-discovery") {
+	// 	services = append(services, "discovery")
+	// }
 
 	loading := loading.NewLoading(services, wg)
 	hasError := make(chan error)
@@ -68,17 +67,17 @@ func (us backupService) Handle(branchName, storepath string) error {
 			}()
 		}
 
-		if serviceName == "discovery" {
-			dis := discovery.NewBackup(us.cnf, branchName, loading)
+		// if serviceName == "discovery" {
+		// 	dis := discovery.NewBackup(us.cnf, branchName, loading)
 
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				if err := dis.Backup(ctx); err != nil {
-					hasError <- err
-				}
-			}()
-		}
+		// 	wg.Add(1)
+		// 	go func() {
+		// 		defer wg.Done()
+		// 		if err := dis.Backup(ctx); err != nil {
+		// 			hasError <- err
+		// 		}
+		// 	}()
+		// }
 	}
 
 	go func() {
@@ -112,7 +111,7 @@ func (us backupService) Handle(branchName, storepath string) error {
 func exportPatch(version string, cnf config.Config, storepath string) error {
 	tempBuildPath := "./temp/builds"
 
-	os.WriteFile(tempBuildPath+"/branch.txt", []byte(version), 0644)
+	// os.WriteFile(tempBuildPath+"/branch.txt", []byte(version), 0644)
 
 	entries, err := os.ReadDir(tempBuildPath)
 	if err != nil {

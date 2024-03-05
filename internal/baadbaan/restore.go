@@ -108,6 +108,7 @@ func (b *baadbaan) runRestore(ctx context.Context) error {
 		return fmt.Errorf("Baadbaan Restore DB Failed Error Is: %s", err)
 	}
 
+	//TODO::remove
 	err = b.exec(ctx, 70, "Baadbaan Restore Code ", func() error {
 		return utils.RestoreCode(b.dir)
 	})
@@ -115,12 +116,21 @@ func (b *baadbaan) runRestore(ctx context.Context) error {
 		return fmt.Errorf("Baadbaan Restore Code Failed Error Is: %s", err)
 	}
 
+	//TODO::remove
 	err = b.exec(ctx, 95, "Baadbaan Restore Branch", func() error {
 		return utils.SwitchBranch(b.dir, b.branch)
 	})
 	if err != nil {
 		return fmt.Errorf("Baadbaan Restore Branch Failed Error is: %s", err)
 	}
+
+	//TODO::remove comment
+	// err = b.exec(ctx, 95, "Baadbaan Migrated Database", func() error {
+	// 	return utils.MigrateDB(b.containerName)
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Migrate Database Failed Error Is: %s", err)
+	// }
 
 	err = b.exec(ctx, 100, "Baadbaan Changed Permission", func() error {
 		return utils.ChangePermision("www-data", b.dir)

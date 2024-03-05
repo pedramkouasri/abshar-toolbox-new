@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -359,28 +358,30 @@ func StartRestore(fileSrc string) (string, error) {
 		return "", fmt.Errorf("UnZip File err: %s", err)
 	}
 
-	branchFile := "./temp/branch.txt"
+	// branchFile := "./temp/branch.txt"
 
-	if _, err := os.Stat(branchFile); err != nil {
-		return "", fmt.Errorf("branch.txt is err: %s", err)
-	}
+	// if _, err := os.Stat(branchFile); err != nil {
+	// 	return "", fmt.Errorf("branch.txt is err: %s", err)
+	// }
 
-	file, err := os.Open(branchFile)
-	if err != nil {
-		return "", fmt.Errorf("open branch.txt is err: %s", err)
-	}
-	defer file.Close()
+	// file, err := os.Open(branchFile)
+	// if err != nil {
+	// 	return "", fmt.Errorf("open branch.txt is err: %s", err)
+	// }
+	// defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	// scanner := bufio.NewScanner(file)
 
-	var branch string
-	if scanner.Scan() {
-		branch = scanner.Text()
-	}
+	// var branch string
+	// if scanner.Scan() {
+	// 	branch = scanner.Text()
+	// }
 
-	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("cannot scan file %v", err)
-	}
+	// if err := scanner.Err(); err != nil {
+	// 	return "", fmt.Errorf("cannot scan file %v", err)
+	// }
 
-	return branch, nil
+	// return branch, nil
+
+	return "", nil
 }

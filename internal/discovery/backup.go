@@ -57,19 +57,19 @@ func (d *discovery) Backup(ctx context.Context) error {
 func (d *discovery) runBackup(ctx context.Context) error {
 	var err error
 
-	err = d.exec(ctx, 10, "Discovery Create Branch", func() error {
-		return utils.CreateBranch(d.dir, d.branch)
-	})
-	if err != nil {
-		return fmt.Errorf("Discovery Create Branch Failed Error is: %s", err)
-	}
+	// err = d.exec(ctx, 10, "Discovery Create Branch", func() error {
+	// 	return utils.CreateBranch(d.dir, d.branch)
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Discovery Create Branch Failed Error is: %s", err)
+	// }
 
-	err = d.exec(ctx, 30, "Discovery Commit files", func() error {
-		return d.commitIfChanges(ctx)
-	})
-	if err != nil {
-		return fmt.Errorf("Discovery Commit Failed Error is: %s", err)
-	}
+	// err = d.exec(ctx, 30, "Discovery Commit files", func() error {
+	// 	return d.commitIfChanges(ctx)
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Discovery Commit Failed Error is: %s", err)
+	// }
 
 	err = d.exec(ctx, 100, "Discovery Gzip Complete", func() error {
 		_, err := os.Create(fmt.Sprintf("./temp/builds/%s.tar.gz", d.serviceName))

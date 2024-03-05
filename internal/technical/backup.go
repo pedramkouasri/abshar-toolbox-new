@@ -59,19 +59,19 @@ func (t *technical) Backup(ctx context.Context) error {
 func (t *technical) runBackup(ctx context.Context) error {
 	var err error
 
-	err = t.exec(ctx, 10, "Technical Create Branch", func() error {
-		return utils.CreateBranch(t.dir, t.branch)
-	})
-	if err != nil {
-		return fmt.Errorf("Technical Create Branch Failed Error is: %s", err)
-	}
+	// err = t.exec(ctx, 10, "Technical Create Branch", func() error {
+	// 	return utils.CreateBranch(t.dir, t.branch)
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Technical Create Branch Failed Error is: %s", err)
+	// }
 
-	err = t.exec(ctx, 30, "Technical Commit files", func() error {
-		return t.commitIfChanges(ctx)
-	})
-	if err != nil {
-		return fmt.Errorf("Technical Commit Failed Error is: %s", err)
-	}
+	// err = t.exec(ctx, 30, "Technical Commit files", func() error {
+	// 	return t.commitIfChanges(ctx)
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Technical Commit Failed Error is: %s", err)
+	// }
 
 	err = t.exec(ctx, 40, "Technical Backup Database Complete", func() error {
 		return utils.BackupDatabase(t.serviceName, t.cnf.DockerComposeDir, t.env)
